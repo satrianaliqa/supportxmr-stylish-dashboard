@@ -1,0 +1,152 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <!--
+    ================= HTML SECTION =================
+    Nama File: xmr-dashboard.html
+    Deskripsi: Single-file stylish XMR Dashboard
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XMR Stylish Dashboard</title>
+  <!--
+    ================= CSS SECTION =================
+    Semua styling berada di sini, tinggal pisahin ke style.css kalau perlu.
+  -->
+  <style>
+    /* RESET & BASE */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0e0e0e;
+      color: #f1f1f1;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* DASHBOARD CONTAINER */
+    .dashboard {
+      background: linear-gradient(145deg, #121212, #1a1a1a);
+      padding: 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 0 20px rgba(0,255,255,0.2);
+      width: 360px;
+      text-align: center;
+      position: relative;
+    }
+    .dashboard::before {
+      content: '';
+      position: absolute;
+      top: -10px; left: -10px; right: -10px; bottom: -10px;
+      border-radius: 1.5rem;
+      background: linear-gradient(60deg, #00ffff, #ff00ff, #ffff00);
+      z-index: -1;
+      filter: blur(10px);
+      animation: rotate 4s linear infinite;
+    }
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #00e5ff;
+      letter-spacing: 1px;
+    }
+    /* CARDS GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .card {
+      background: #1f1f1f;
+      padding: 1rem;
+      border-radius: 1rem;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px) scale(1.02);
+    }
+    .card p {
+      font-size: 0.9rem;
+      color: #bbb;
+    }
+    .value {
+      font-size: 1.4rem;
+      margin-top: 0.3rem;
+      font-weight: bold;
+      color: #fff;
+      height: 1.6em;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    ================= BODY / HTML ====================================
+    Contoh struktur dashboard. Pisahin gampang nanti.  
+  -->
+  <div class="dashboard">
+    <h1>📊 XMR Dashboard</h1>
+    <div class="grid">
+      <div class="card">
+        <p>Active Workers</p>
+        <div id="workers" class="value">0</div>
+      </div>
+      <div class="card">
+        <p>Total Hashrate (MH/s)</p>
+        <div id="hashrate" class="value">0</div>
+      </div>
+      <div class="card">
+        <p>Pending XMR</p>
+        <div id="pending" class="value">0</div>
+      </div>
+      <div class="card">
+        <p>Total Paid XMR</p>
+        <div id="paid" class="value">0</div>
+      </div>
+    </div>
+  </div>  <!--
+    ================= JAVASCRIPT SECTION =================
+    Logic fetch & animate number, tinggal pisahin ke script.js.
+  -->  <script>
+    /* Bismillah... *huft* */
+    const wallet = '49jJHWcrwv55kvqKd7118yTqTWhdMJg6SNMxaSQLrmFFLjfdEBHyMoG4Ak28bTDMcc99x5epb6nY57dwBWuivDxq9vNK5pR'; // Hardcode wallet bro
+
+    function animateNumber(el, target, duration = 800) {
+      const start = parseFloat(el.innerText.replace(/,/g, '')) || 0;
+      const range = target - start;
+      let startTime;
+
+      const step = (timestamp) => {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        el.innerText = (start + range * progress).toLocaleString('en', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        if (progress < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+
+    async function fetchData() {
+      try {
+        const res = await fetch(`https://supportxmr.com/api/miner/${wallet}/stats`);
+        if(!res.ok) throw new Error('Network response was not ok.');
+        const { stats } = await res.json();
+
+        animateNumber(document.getElementById('workers'), stats.workers);
+        animateNumber(document.getElementById('hashrate'), stats.hashrate / 1e6);
+        animateNumber(document.getElementById('pending'), stats.pending / 1e12);
+        animateNumber(document.getElementById('paid'), stats.paid / 1e12);
+      } catch (err) {
+        console.error('Fetch error: ', err);
+      }
+    }
+
+    // initial & interval
+    fetchData();
+    setInterval(fetchData, 30000); // tiap 30 detik refresh
+  </script></body>
+</html>
