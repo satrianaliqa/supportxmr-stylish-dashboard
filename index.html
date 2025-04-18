@@ -36,14 +36,46 @@
       flex-direction:column;
       height:100%;
     }
-    form {
+        form {
       display:flex;
       align-items:center;
       justify-content:center;
       gap:0.5rem;
       width:100%;
-      margin-top:1rem;
+      margin-top:0;
       margin-bottom:auto;
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.3s ease-out;
+    }
+    form.visible {
+      max-height: 60px;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+    .wallet-toggle {
+      position: absolute;
+      top: 1rem;
+      right: 50%;
+      transform: translateX(50%);
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .wallet-toggle .material-icons {
+      font-size: 18px;
+      transition: transform 0.3s ease;
+    }
+    .wallet-toggle.open .material-icons {
+      transform: rotate(180deg);
     }
     input {
       flex:1;
@@ -85,7 +117,10 @@
 </head>
 <body>
   <div class="container">
-    <form id="walletForm">
+    <div class="wallet-toggle">
+      <span class="material-icons">expand_more</span>
+    </div>
+    <form id="walletForm" class="visible">
       <input type="text" id="walletInput" placeholder="Enter XMR Wallet Address" required>
       <button type="submit" title="Save Wallet">
         <span class="material-icons">save</span>
@@ -127,7 +162,12 @@
       initDashboard();
     });
 
-    function animateNumber(el,target,decimals=12,duration=10000) {
+    function animateNumber(el, target, decimals=12, duration=1000, isAutoRefresh=false) {
+      // For initial load or manual refresh, use shorter animation
+      if (isAutoRefresh) {
+        duration = 10000; // 10 seconds for auto refresh
+      }
+      
       const start=parseFloat(el.innerText.replace(/,/g,''))||0;
       const range=target-start; let startTime;
       function step(ts) {
@@ -140,7 +180,7 @@
       requestAnimationFrame(step);
     }
 
-    async function fetchData(){
+    async function fetchData(isAutoRefresh=false){
       if(!wallet) return;
       try{
         const res=await fetch(`https://supportxmr.com/api/miner/${wallet}/stats`);
@@ -154,21 +194,31 @@
         const is=base.invalidShares||0;
         const th=base.totalHashes||0;
         // update
-        animateNumber(document.getElementById('paid'),paid,12);
-        animateNumber(document.getElementById('pending'),pending,12);
+        animateNumber(document.getElementById('paid'),paid,12,1000,isAutoRefresh);
+        animateNumber(document.getElementById('pending'),pending,12,1000,isAutoRefresh);
         document.getElementById('metrics').innerText=`${Math.round(hr)} H/s - ${vs}/${is}`;
         document.getElementById('hashes').innerText=th.toLocaleString();
       }catch(err){console.error(err);}  
     }
 
     function initDashboard(){
-      fetchData();
+      // Initial fetch (not auto-refresh)
+      fetchData(false);
       clearInterval(window.dashboardInterval);
-      window.dashboardInterval=setInterval(fetchData,2000);
+      window.dashboardInterval=setInterval(() => fetchData(true), 2000);
     }
 
     // auto init if wallet exists
     if(wallet) initDashboard();
+    
+    // Wallet drawer toggle functionality
+    const walletToggle = document.querySelector('.wallet-toggle');
+    const walletForm = document.getElementById('walletForm');
+    
+    walletToggle.addEventListener('click', () => {
+      walletForm.classList.toggle('visible');
+      walletToggle.classList.toggle('open');
+    });
   </script>
 </body>
 </html>
