@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <!--
     File: xmr-dashboard.html
@@ -38,7 +39,8 @@
       justify-content: center;
       height:100%;
     }
-        form {
+    /* Wallet form tanpa absolute supaya tidak menabrak input */
+    form {
       display:flex;
       align-items:center;
       justify-content:center;
@@ -47,11 +49,6 @@
       overflow: hidden;
       max-height: 0;
       transition: max-height 0.3s ease-out;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 0 1rem;
     }
     form.visible {
       max-height: 60px;
@@ -59,10 +56,7 @@
       padding-bottom: 1rem;
     }
     .wallet-toggle {
-      position: absolute;
-      top: 1rem;
-      left: 50%;
-      transform: translateX(-50%);
+      margin-bottom: 1rem;
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 50%;
@@ -74,6 +68,7 @@
       cursor: pointer;
       z-index: 10;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin: 0 auto;
     }
     .wallet-toggle .material-icons {
       font-size: 18px;
@@ -84,10 +79,10 @@
     }
     input {
       flex:1;
-      padding:.75rem;
-      border:1px solid #ccc;
-      border-radius:2rem;
-      font-size:clamp(0.9rem,2.5vw,1rem);
+      padding: .75rem;
+      border: 1px solid #ccc;
+      border-radius: 2rem;
+      font-size: clamp(0.9rem,2.5vw,1rem);
     }
     button {
       background:none;
@@ -104,19 +99,28 @@
       margin:auto;
     }
     .total-paid {
-      font-size:clamp(1rem,3vw,1.25rem);
+      font-size: clamp(1rem,3vw,1.25rem);
       color:#333;
     }
     .pending {
-      font-size:clamp(2rem,6vw,3rem);
+      font-size: clamp(2rem,6vw,3rem);
       font-weight:700;
     }
     .metrics {
-      font-size:clamp(1rem,3vw,1.25rem);
+      font-size: clamp(1rem,3vw,1.25rem);
     }
     .total-hashes {
-      font-size:clamp(0.75rem,2vw,1rem);
+      font-size: clamp(0.75rem,2vw,1rem);
       color:#888;
+    }
+    /* Gaya untuk hash mining palsu */
+    #mining-hash {
+      position: absolute;
+      bottom: 1rem;
+      width: 100%;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #888;
     }
   </style>
 </head>
@@ -142,38 +146,40 @@
   <!-- JavaScript -->
   <script>
     // Cookie helpers
-    function setCookie(name, value, days=365) {
-      const d=new Date(); d.setTime(d.getTime()+days*24*60*60*1000);
-      document.cookie=`${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/`;
+    function setCookie(name, value, days = 365) {
+      const d = new Date();
+      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+      document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/`;
     }
     function getCookie(name) {
-      return document.cookie.split('; ').reduce((r,v)=>{
-        const [k,val]=v.split('='); return k===name?decodeURIComponent(val):r;
-      },'');
+      return document.cookie.split('; ').reduce((r, v) => {
+        const [k, val] = v.split('=');
+        return k === name ? decodeURIComponent(val) : r;
+      }, '');
     }
 
-    const form=document.getElementById('walletForm');
-    const input=document.getElementById('walletInput');
-    let wallet=getCookie('xmrWallet');
+    const form = document.getElementById('walletForm');
+    const input = document.getElementById('walletInput');
+    let wallet = getCookie('xmrWallet');
 
     // prefill if exists
-    if(wallet) input.value=wallet;
+    if (wallet) input.value = wallet;
 
-    form.addEventListener('submit',e=>{
+    form.addEventListener('submit', e => {
       e.preventDefault();
-      wallet=input.value.trim();
-      if(!wallet) return;
-      setCookie('xmrWallet',wallet);
+      wallet = input.value.trim();
+      if (!wallet) return;
+      setCookie('xmrWallet', wallet);
       initDashboard();
     });
 
-    function animateNumber(el, target, decimals=12, duration=1000, isAutoRefresh=false, suffix="", useCommas=false) {
-      // For auto refresh, use longer animation
+    // Fungsi animasi untuk angka kecuali total hashes (tidak dianimasikan)
+    function animateNumber(el, target, decimals = 12, duration = 1000, isAutoRefresh = false, suffix = "", useCommas = false) {
+      // Untuk auto refresh, gunakan durasi yang lebih lama
       if (isAutoRefresh) {
-        duration = 100000; // 100 seconds for auto refresh
+        duration = 100000; // 100 detik untuk auto refresh
       }
       
-      // Get the current value
       let start;
       if (useCommas) {
         start = parseInt(el.innerText.replace(/,/g, '')) || 0;
@@ -206,44 +212,44 @@
       requestAnimationFrame(step);
     }
 
-    async function fetchData(isAutoRefresh=false){
-      if(!wallet) return;
-      try{
-        const res=await fetch(`https://supportxmr.com/api/miner/${wallet}/stats`);
-        const data=await res.json();
-        const base=data.stats||data;
+    async function fetchData(isAutoRefresh = false) {
+      if (!wallet) return;
+      try {
+        const res = await fetch(`https://supportxmr.com/api/miner/${wallet}/stats`);
+        const data = await res.json();
+        const base = data.stats || data;
         // compute
-        const paid=(base.amtPaid||data.amtPaid||0)/1e12;
-        const pending=(base.amtDue||data.amtDue||0)/1e12;
-        const hr=base.hashrate||base.hash||0;
-        const vs=base.validShares||0;
-        const is=base.invalidShares||0;
-        const th=base.totalHashes||0;
+        const paid = (base.amtPaid || data.amtPaid || 0) / 1e12;
+        const pending = (base.amtDue || data.amtDue || 0) / 1e12;
+        const hr = base.hashrate || base.hash || 0;
+        const vs = base.validShares || 0;
+        const is = base.invalidShares || 0;
+        const th = base.totalHashes || 0;
         
-        // Update with animations
+        // Update dengan animasi kecuali total hashes
         animateNumber(document.getElementById('paid'), paid, 12, 1000, isAutoRefresh);
         animateNumber(document.getElementById('pending'), pending, 12, 1000, isAutoRefresh);
         
         // Animate hashrate
         const metricsEl = document.getElementById('metrics');
-        const currentHr = parseInt(metricsEl.innerText.split(' ')[0]) || 0;
         animateNumber(metricsEl, Math.round(hr), 0, 1000, isAutoRefresh, ` H/s - ${vs}/${is}`);
         
-        // Animate total hashes
-        const hashesEl = document.getElementById('hashes');
-        animateNumber(hashesEl, th, 0, 1000, isAutoRefresh, "", true);
-      }catch(err){console.error(err);}  
+        // Update total hashes secara langsung tanpa animasi
+        document.getElementById('hashes').innerText = th.toLocaleString();
+      } catch (err) {
+        console.error(err);
+      }
     }
 
-    function initDashboard(){
-      // Initial fetch (not auto-refresh)
+    function initDashboard() {
+      // Initial fetch (tidak auto-refresh)
       fetchData(false);
       clearInterval(window.dashboardInterval);
-      window.dashboardInterval=setInterval(() => fetchData(true), 2000);
+      window.dashboardInterval = setInterval(() => fetchData(true), 2000);
     }
 
-    // auto init if wallet exists
-    if(wallet) initDashboard();
+    // auto init jika wallet ada
+    if (wallet) initDashboard();
     
     // Wallet drawer toggle functionality
     const walletToggle = document.querySelector('.wallet-toggle');
@@ -252,7 +258,7 @@
     walletToggle.addEventListener('click', () => {
       walletForm.classList.toggle('visible');
       walletToggle.classList.toggle('open');
-      // Update the icon
+      // Update ikon
       const icon = walletToggle.querySelector('.material-icons');
       if (walletForm.classList.contains('visible')) {
         icon.textContent = 'expand_less';
@@ -261,12 +267,32 @@
       }
     });
     
-    // Check if we have a wallet saved and show form if not
+    // Tampilkan form jika wallet belum disimpan
     if (!wallet) {
       walletForm.classList.add('visible');
       walletToggle.classList.add('open');
       walletToggle.querySelector('.material-icons').textContent = 'expand_less';
     }
+  </script>
+  
+  <!-- Fake mining hash generator -->
+  <div id="mining-hash"></div>
+  <script>
+    function getRandomHex64() {
+      const hex = '0123456789abcdef';
+      let str = '';
+      for (let i = 0; i < 64; i++) {
+        str += hex[Math.floor(Math.random() * hex.length)];
+      }
+      return str;
+    }
+    function updateHashes() {
+      document.getElementById('mining-hash').textContent = getRandomHex64();
+    }
+    // Initial update
+    updateHashes();
+    // Update setiap 333ms (kira-kira 3 hash per detik)
+    setInterval(updateHashes, 333);
   </script>
 </body>
 </html>
