@@ -165,7 +165,7 @@
     function animateNumber(el, target, decimals=12, duration=1000, isAutoRefresh=false) {
       // For initial load or manual refresh, use shorter animation
       if (isAutoRefresh) {
-        duration = 10000; // 10 seconds for auto refresh
+        duration = 100000; // 100 seconds for auto refresh
       }
       
       const start=parseFloat(el.innerText.replace(/,/g,''))||0;
