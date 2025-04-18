@@ -1,22 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!--
-    File: xmr-dashboard.html
-    Monochrome XMR Dashboard - wallet at top & slower animation
-  -->
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Monochrome Monero (XMR) mining stats: pending, hashrate & shares, total paid, total hashes.">
-  <title>XMR Dashboard</title>
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XMR Dashboard – Vanilla CountUp</title>
+
   <!-- Google Font & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
-  
+
   <!-- CSS -->
   <style>
-    /* Base reset */
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; width:100%; }
     body {
@@ -27,7 +21,6 @@
       justify-content:center;
       align-items:center;
       padding:1rem;
-      height:100%;
       position: relative;
     }
     .container {
@@ -36,97 +29,65 @@
       width:100%;
       display:flex;
       flex-direction:column;
-      justify-content: center;
+      justify-content:center;
       height:100%;
     }
-    /* Form wallet tanpa positioning absolute agar tidak menabrak elemen lain */
-    form {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:0.5rem;
-      width:100%;
-      overflow: hidden;
-      max-height: 0;
-      transition: max-height 0.3s ease-out;
-    }
-    form.visible {
-      max-height: 60px;
-      padding-top: 1rem;
-      padding-bottom: 1rem;
-    }
     .wallet-toggle {
-      margin-bottom: 1rem;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      margin: 0 auto;
+      background:#fff;
+      border:1px solid #ddd;
+      border-radius:50%;
+      width:28px; height:28px;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.1);
+      margin:0 auto 1rem;
+      transition:transform .3s ease;
     }
-    .wallet-toggle .material-icons {
-      font-size: 18px;
-      transition: transform 0.3s ease;
+    .wallet-toggle.open { transform: rotate(180deg); }
+    .wallet-toggle .material-icons { font-size:18px; }
+
+    form {
+      display:flex; align-items:center; justify-content:center;
+      gap:.5rem; width:100%; overflow:hidden;
+      max-height:0; transition:max-height .3s ease-out;
     }
-    .wallet-toggle.open .material-icons {
-      transform: rotate(180deg);
-    }
+    form.visible { max-height:60px; padding:1rem 0; }
     input {
-      flex:1;
-      padding: .75rem;
-      border: 1px solid #ccc;
-      border-radius: 2rem;
-      font-size: clamp(0.9rem,2.5vw,1rem);
+      flex:1; padding:.75rem;
+      border:1px solid #ccc; border-radius:2rem;
+      font-size:clamp(.9rem,2.5vw,1rem);
     }
     button {
-      background:none;
-      border:none;
-      cursor:pointer;
-      font-size:1.5rem;
-      color:#000;
+      background:none; border:none; cursor:pointer;
+      font-size:1.5rem; color:#000;
     }
+
     .info {
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:1rem;
-      margin:auto;
+      display:flex; flex-direction:column;
+      align-items:center; gap:1rem; margin:auto;
     }
     .total-paid {
-      font-size: clamp(1rem,3vw,1.25rem);
-      color:#333;
+      font-size:clamp(1rem,3vw,1.25rem); color:#333;
     }
     .pending {
-      font-size: clamp(2rem,6vw,3rem);
-      font-weight:700;
+      font-size:clamp(2rem,6vw,3rem); font-weight:700;
     }
     .metrics {
-      font-size: clamp(1rem,3vw,1.25rem);
+      font-size:clamp(1rem,3vw,1.25rem);
     }
     .total-hashes {
-      font-size: clamp(0.75rem,2vw,1rem);
-      color:#888;
+      font-size:clamp(.75rem,2vw,1rem); color:#888;
     }
-    /* Gaya untuk hash mining palsu, dengan font size responsive (dibatasi 1 sampai 2pt) */
+
     #mining-hash {
-      position: absolute;
-      bottom: 1rem;
-      width: 100%;
-      text-align: center;
-      /* Gunakan clamp untuk ukuran font responsif dengan batas minimal 1pt dan maksimal 2pt */
-      font-size: clamp(1pt, 2vw, 2pt);
-      color: #888;
+      position:absolute; bottom:1rem; width:100%;
+      text-align:center;
+      font-size:clamp(3pt,2vw,8pt); color:#888;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="wallet-toggle">
+    <div class="wallet-toggle" id="walletToggle">
       <span class="material-icons">expand_more</span>
     </div>
     <form id="walletForm">
@@ -135,36 +96,55 @@
         <span class="material-icons">save</span>
       </button>
     </form>
+
     <div class="info">
       <div id="paid" class="total-paid">0.000000000000</div>
       <div id="pending" class="pending">0.000000000000</div>
-      <div id="metrics" class="metrics">0 H/s - 0/0</div>
+      <div id="metrics" class="metrics">
+        <span id="hrNumber">0</span><span id="hrSuffix"> H/s - 0/0</span>
+      </div>
       <div id="hashes" class="total-hashes">0</div>
     </div>
   </div>
-  
-  <!-- JavaScript -->
+
+  <div id="mining-hash"></div>
+
+  <!-- CountUp.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.6.2/countUp.umd.js"></script>
   <script>
     // Cookie helpers
-    function setCookie(name, value, days = 365) {
+    function setCookie(name, value, days=365) {
       const d = new Date();
-      d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-      document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/`;
+      d.setTime(d.getTime() + days*24*60*60*1000);
+      document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/";
     }
     function getCookie(name) {
       return document.cookie.split('; ').reduce((r, v) => {
-        const [k, val] = v.split('=');
+        const [k,val] = v.split('=');
         return k === name ? decodeURIComponent(val) : r;
       }, '');
     }
 
+    // Elements
     const form = document.getElementById('walletForm');
     const input = document.getElementById('walletInput');
+    const toggle = document.getElementById('walletToggle');
     let wallet = getCookie('xmrWallet');
 
-    // prefill jika ada
+    // Prefill & init UI
     if (wallet) input.value = wallet;
+    else {
+      form.classList.add('visible');
+      toggle.classList.add('open');
+    }
 
+    // Toggle form
+    toggle.addEventListener('click', () => {
+      form.classList.toggle('visible');
+      toggle.classList.toggle('open');
+    });
+
+    // Save wallet
     form.addEventListener('submit', e => {
       e.preventDefault();
       wallet = input.value.trim();
@@ -173,118 +153,78 @@
       initDashboard();
     });
 
-    // Fungsi animasi untuk angka kecuali total hashes
-    function animateNumber(el, target, decimals = 12, duration = 1000, isAutoRefresh = false, suffix = "", useCommas = false) {
-      if (isAutoRefresh) {
-        duration = 100000; // 100 detik untuk auto refresh
-      }
-      
-      let start;
-      if (useCommas) {
-        start = parseInt(el.innerText.replace(/,/g, '')) || 0;
+    // CountUp instances
+    let paidCounter, pendingCounter, hrCounter;
+
+    function updateCounters(paid, pendingVal, hr, vs, is) {
+      if (!paidCounter) {
+        paidCounter = new countUp.CountUp('paid', paid, {
+          duration:1,
+          decimalPlaces:12,
+          useGrouping:false
+        });
+        pendingCounter = new countUp.CountUp('pending', pendingVal, {
+          duration:1.2,
+          decimalPlaces:12,
+          useGrouping:false
+        });
+        hrCounter = new countUp.CountUp('hrNumber', hr, {
+          duration:1,
+          decimalPlaces:0,
+          useGrouping:true
+        });
+        paidCounter.start();
+        pendingCounter.start();
+        hrCounter.start();
       } else {
-        start = parseFloat(el.innerText.replace(/,/g, '')) || 0;
+        paidCounter.update(paid);
+        pendingCounter.update(pendingVal);
+        hrCounter.update(hr);
       }
-      
-      const range = target - start; 
-      let startTime;
-      
-      function step(ts) {
-        if (!startTime) startTime = ts;
-        const progress = Math.min((ts - startTime) / duration, 1);
-        const val = start + range * progress;
-        
-        if (useCommas) {
-          el.innerText = Math.round(val).toLocaleString() + suffix;
-        } else if (decimals > 0) {
-          el.innerText = val.toLocaleString('en', {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals
-          }) + suffix;
-        } else {
-          el.innerText = Math.round(val) + suffix;
-        }
-        
-        if (progress < 1) requestAnimationFrame(step);
-      }
-      
-      requestAnimationFrame(step);
+      document.getElementById('hrSuffix').textContent = ` H/s - ${vs}/${is}`;
     }
 
-    async function fetchData(isAutoRefresh = false) {
+    // Fetch data & update dashboard
+    async function fetchData(isAuto=false) {
       if (!wallet) return;
       try {
         const res = await fetch(`https://supportxmr.com/api/miner/${wallet}/stats`);
         const data = await res.json();
-        const base = data.stats || data;
-        // Hitung nilai
-        const paid = (base.amtPaid || data.amtPaid || 0) / 1e12;
-        const pending = (base.amtDue || data.amtDue || 0) / 1e12;
-        const hr = base.hashrate || base.hash || 0;
-        const vs = base.validShares || 0;
-        const is = base.invalidShares || 0;
-        const th = base.totalHashes || 0;
-        
-        // Update dengan animasi (kecuali total hashes)
-        animateNumber(document.getElementById('paid'), paid, 12, 1000, isAutoRefresh);
-        animateNumber(document.getElementById('pending'), pending, 12, 1000, isAutoRefresh);
-        const metricsEl = document.getElementById('metrics');
-        animateNumber(metricsEl, Math.round(hr), 0, 1000, isAutoRefresh, ` H/s - ${vs}/${is}`);
-        document.getElementById('hashes').innerText = th.toLocaleString();
-      } catch (err) {
+        const base = data.stats||data;
+        const paid = (base.amtPaid||0)/1e12;
+        const pendingVal = (base.amtDue||0)/1e12;
+        const hr = base.hashrate||base.hash||0;
+        const vs = base.validShares||0;
+        const is = base.invalidShares||0;
+        const th = base.totalHashes||0;
+
+        updateCounters(paid, pendingVal, Math.round(hr), vs, is);
+        document.getElementById('hashes').textContent = th.toLocaleString();
+      } catch(err) {
         console.error(err);
       }
     }
 
     function initDashboard() {
-      fetchData(false); // Initial fetch
+      fetchData();
       clearInterval(window.dashboardInterval);
       window.dashboardInterval = setInterval(() => fetchData(true), 2000);
     }
 
     if (wallet) initDashboard();
-    
-    // Toggle untuk form wallet
-    const walletToggle = document.querySelector('.wallet-toggle');
-    const walletForm = document.getElementById('walletForm');
-    
-    walletToggle.addEventListener('click', () => {
-      walletForm.classList.toggle('visible');
-      walletToggle.classList.toggle('open');
-      const icon = walletToggle.querySelector('.material-icons');
-      icon.textContent = walletForm.classList.contains('visible') ? 'expand_less' : 'expand_more';
-    });
-    
-    if (!wallet) {
-      walletForm.classList.add('visible');
-      walletToggle.classList.add('open');
-      walletToggle.querySelector('.material-icons').textContent = 'expand_less';
-    }
-  </script>
-  
-  <!-- Fake mining hash generator: selama 15 detik tampilkan total 50 hash random -->
-  <div id="mining-hash"></div>
-  <script>
+
+    // Fake mining hash generator
     function getRandomHex64() {
       const hex = '0123456789abcdef';
-      let str = '';
-      for (let i = 0; i < 64; i++) {
-        str += hex[Math.floor(Math.random() * hex.length)];
-      }
-      return str;
+      let s=''; for (let i=0;i<64;i++) s += hex[Math.floor(Math.random()*16)];
+      return s;
     }
-    function updateHashes() {
+    let hashCnt=0;
+    const hi = setInterval(()=>{
+      if (hashCnt>=50) return clearInterval(hi);
       document.getElementById('mining-hash').textContent = getRandomHex64();
-    }
-    let hashCount = 0;
-    const hashInterval = setInterval(() => {
-      if (hashCount >= 50) {
-        clearInterval(hashInterval);
-      } else {
-        updateHashes();
-        hashCount++;
-      }
-    }, 300); // 300ms interval x 50 hash = 15 detik total
+      hashCnt++;
+    }, 300);
   </script>
 </body>
 </html>
