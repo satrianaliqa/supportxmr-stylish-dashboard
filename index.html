@@ -27,6 +27,7 @@
       align-items:center;
       padding:1rem;
       height:100%;
+      position: relative;
     }
     .container {
       text-align:center;
@@ -34,6 +35,7 @@
       width:100%;
       display:flex;
       flex-direction:column;
+      justify-content: center;
       height:100%;
     }
         form {
@@ -42,22 +44,25 @@
       justify-content:center;
       gap:0.5rem;
       width:100%;
-      margin-top:0;
-      margin-bottom:auto;
       overflow: hidden;
       max-height: 0;
       transition: max-height 0.3s ease-out;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 0 1rem;
     }
     form.visible {
       max-height: 60px;
-      margin-top: 1rem;
-      margin-bottom: 1rem;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
     }
     .wallet-toggle {
       position: absolute;
       top: 1rem;
-      right: 50%;
-      transform: translateX(50%);
+      left: 50%;
+      transform: translateX(-50%);
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 50%;
@@ -120,7 +125,7 @@
     <div class="wallet-toggle">
       <span class="material-icons">expand_more</span>
     </div>
-    <form id="walletForm" class="visible">
+    <form id="walletForm">
       <input type="text" id="walletInput" placeholder="Enter XMR Wallet Address" required>
       <button type="submit" title="Save Wallet">
         <span class="material-icons">save</span>
@@ -162,21 +167,42 @@
       initDashboard();
     });
 
-    function animateNumber(el, target, decimals=12, duration=1000, isAutoRefresh=false) {
-      // For initial load or manual refresh, use shorter animation
+    function animateNumber(el, target, decimals=12, duration=1000, isAutoRefresh=false, suffix="", useCommas=false) {
+      // For auto refresh, use longer animation
       if (isAutoRefresh) {
         duration = 100000; // 100 seconds for auto refresh
       }
       
-      const start=parseFloat(el.innerText.replace(/,/g,''))||0;
-      const range=target-start; let startTime;
-      function step(ts) {
-        if(!startTime)startTime=ts;
-        const progress=Math.min((ts-startTime)/duration,1);
-        const val=start+range*progress;
-        el.innerText=val.toLocaleString('en',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
-        if(progress<1)requestAnimationFrame(step);
+      // Get the current value
+      let start;
+      if (useCommas) {
+        start = parseInt(el.innerText.replace(/,/g, '')) || 0;
+      } else {
+        start = parseFloat(el.innerText.replace(/,/g, '')) || 0;
       }
+      
+      const range = target - start; 
+      let startTime;
+      
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        const progress = Math.min((ts - startTime) / duration, 1);
+        const val = start + range * progress;
+        
+        if (useCommas) {
+          el.innerText = Math.round(val).toLocaleString() + suffix;
+        } else if (decimals > 0) {
+          el.innerText = val.toLocaleString('en', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+          }) + suffix;
+        } else {
+          el.innerText = Math.round(val) + suffix;
+        }
+        
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      
       requestAnimationFrame(step);
     }
 
@@ -193,11 +219,19 @@
         const vs=base.validShares||0;
         const is=base.invalidShares||0;
         const th=base.totalHashes||0;
-        // update
-        animateNumber(document.getElementById('paid'),paid,12,1000,isAutoRefresh);
-        animateNumber(document.getElementById('pending'),pending,12,1000,isAutoRefresh);
-        document.getElementById('metrics').innerText=`${Math.round(hr)} H/s - ${vs}/${is}`;
-        document.getElementById('hashes').innerText=th.toLocaleString();
+        
+        // Update with animations
+        animateNumber(document.getElementById('paid'), paid, 12, 1000, isAutoRefresh);
+        animateNumber(document.getElementById('pending'), pending, 12, 1000, isAutoRefresh);
+        
+        // Animate hashrate
+        const metricsEl = document.getElementById('metrics');
+        const currentHr = parseInt(metricsEl.innerText.split(' ')[0]) || 0;
+        animateNumber(metricsEl, Math.round(hr), 0, 1000, isAutoRefresh, ` H/s - ${vs}/${is}`);
+        
+        // Animate total hashes
+        const hashesEl = document.getElementById('hashes');
+        animateNumber(hashesEl, th, 0, 1000, isAutoRefresh, "", true);
       }catch(err){console.error(err);}  
     }
 
@@ -218,7 +252,21 @@
     walletToggle.addEventListener('click', () => {
       walletForm.classList.toggle('visible');
       walletToggle.classList.toggle('open');
+      // Update the icon
+      const icon = walletToggle.querySelector('.material-icons');
+      if (walletForm.classList.contains('visible')) {
+        icon.textContent = 'expand_less';
+      } else {
+        icon.textContent = 'expand_more';
+      }
     });
+    
+    // Check if we have a wallet saved and show form if not
+    if (!wallet) {
+      walletForm.classList.add('visible');
+      walletToggle.classList.add('open');
+      walletToggle.querySelector('.material-icons').textContent = 'expand_less';
+    }
   </script>
 </body>
 </html>
