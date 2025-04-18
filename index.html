@@ -3,47 +3,50 @@
   <!--
     ================= HTML SECTION =================
     File: xmr-dashboard.html
-    Clean, responsive, SEO-friendly XMR Dashboard with Material You style
+    Clean Material You–style XMR Dashboard with live API data
   -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Monitor Monero (XMR) mining stats in a clean, responsive dashboard. View pending balance, workers, hashrate, and total paid XMR.">
-  <meta name="keywords" content="XMR dashboard, Monero mining, crypto stats, responsive dashboard, Material Design">
+  <meta name="description" content="Monitor Monero (XMR) mining stats: pending balance, shares, hashrate, total paid.">
   <title>XMR Dashboard</title>  <!-- Google Font & Icons -->  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">  <!--
-    ================= CSS SECTION =================
-  -->  <style>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">  <!-- CSS -->  <style>
     :root {
-      --md-sys-color-primary: #2962ff;
-      --md-sys-color-on-primary: #ffffff;
-      --md-sys-color-surface: #ffffff;
-      --md-sys-color-on-surface: #1a1a1a;
-      --md-sys-color-background: #f5f5f5;
-      --md-sys-elevation-surface: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      --md-primary: #2962ff;
+      --md-on-primary: #fff;
+      --md-surface: #fff;
+      --md-on-surface: #202124;
+      --md-background: #f5f5f5;
+      --md-elevation: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
+    html, body { height: 100%; width: 100%; }
+    body {
       font-family: 'DM Sans', sans-serif;
-      background: var(--md-sys-color-background);
-      color: var(--md-sys-color-on-surface);
-      height: 100%;
-      width: 100%;
+      background: var(--md-background);
+      color: var(--md-on-surface);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
     }
-    body { display: flex; justify-content: center; align-items: center; padding: 1rem; }
     .dashboard {
-      background: var(--md-sys-color-surface);
+      background: var(--md-surface);
       border-radius: 1rem;
-      box-shadow: var(--md-sys-elevation-surface);
-      max-width: 400px;
+      box-shadow: var(--md-elevation);
       width: 100%;
+      max-width: 400px;
       padding: 1.5rem;
       text-align: center;
     }
-    h1 {
+    .dashboard h1:first-of-type {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--md-primary);
+    }
+    .dashboard h1:last-of-type {
       font-size: 1.5rem;
       font-weight: 500;
       margin-bottom: 1rem;
-      color: var(--md-sys-color-on-surface);
     }
     .wallet-form {
       display: flex;
@@ -55,54 +58,40 @@
       padding: .75rem;
       border: 1px solid #ccc;
       border-radius: .5rem;
-      font-size: 0.95rem;
+      font-size: .95rem;
     }
     .wallet-form button {
       padding: .75rem 1rem;
-      background: var(--md-sys-color-primary);
-      color: var(--md-sys-color-on-primary);
+      background: var(--md-primary);
+      color: var(--md-on-primary);
       border: none;
       border-radius: .5rem;
-      font-size: 0.95rem;
       cursor: pointer;
+      font-size: .95rem;
     }
     .card-pending {
-      background: var(--md-sys-color-primary);
-      color: var(--md-sys-color-on-primary);
+      background: var(--md-primary);
+      color: var(--md-on-primary);
       border-radius: .75rem;
       padding: 1.5rem;
-      box-shadow: var(--md-sys-elevation-surface);
+      box-shadow: var(--md-elevation);
       margin-bottom: 1rem;
     }
-    .card-pending p {
-      margin-bottom: .5rem;
-      font-weight: 500;
-    }
-    .value-pending {
-      font-size: 2.5rem;
-      font-weight: 700;
-      line-height: 1;
-    }
+    .card-pending p { margin-bottom: .5rem; font-weight: 500; }
+    .value-pending { font-size: 2.5rem; font-weight: 700; line-height:1; }
     .metrics-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 1rem;
     }
     .card {
-      background: var(--md-sys-color-surface);
+      background: var(--md-surface);
       border-radius: .5rem;
       padding: 1rem;
-      box-shadow: var(--md-sys-elevation-surface);
+      box-shadow: var(--md-elevation);
     }
-    .card p {
-      font-size: .85rem;
-      color: #555;
-    }
-    .value {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-top: .25rem;
-    }
+    .card p { font-size: .85rem; color: #555; }
+    .value { font-size: 1.2rem; font-weight: 600; margin-top: .25rem; }
     @media (max-width: 360px) {
       .value-pending { font-size: 2rem; }
     }
@@ -119,46 +108,50 @@
 <!-- Pending XMR -->
 <section class="card-pending">
   <p>Pending XMR</p>
-  <div id="pending" class="value-pending">0.00</div>
+  <div id="pending" class="value-pending">0.000000</div>
 </section>
 
 <!-- Other Metrics -->
 <div class="metrics-grid">
   <div class="card">
-    <p>Active Workers</p>
+    <p id="workersLabel">Active Workers</p>
     <div id="workers" class="value">0</div>
   </div>
   <div class="card">
-    <p>Hashrate (MH/s)</p>
+    <p>Hashrate (<span id="hashUnit">MH/s</span>)</p>
     <div id="hashrate" class="value">0.00</div>
   </div>
   <div class="card">
     <p>Total Paid XMR</p>
-    <div id="paid" class="value">0.00</div>
+    <div id="paid" class="value">0.000000</div>
   </div>
 </div>
 
-  </main>  <!--
-    ================= JAVASCRIPT SECTION =================
-    Handles wallet cookie, fetch & animate stats
-  -->  <script>
-    // helper: cookie get/set
-    const cookieName = 'xmrWallet';
+  </main>  <!-- JavaScript -->  <script>
+    // Cookie helpers
     function setCookie(name, value, days=365) {
-      const d = new Date();
-      d.setTime(d.getTime() + days*24*60*60*1000);
-      document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+      const d = new Date(); d.setTime(d.getTime() + days*24*60*60*1000);
+      document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/`;
     }
     function getCookie(name) {
       return document.cookie.split('; ').reduce((r, v) => {
-        const parts = v.split('=');
-        return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+        const [k, val] = v.split('=');
+        return k === name ? decodeURIComponent(val) : r;
       }, '');
     }
 
     const form = document.getElementById('walletForm');
     const input = document.getElementById('walletInput');
-    let wallet = getCookie(cookieName);
+    let wallet = getCookie('xmrWallet');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      wallet = input.value.trim();
+      if (!wallet) return;
+      setCookie('xmrWallet', wallet);
+      form.style.display = 'none';
+      initDashboard();
+    });
 
     if (wallet) {
       input.value = wallet;
@@ -166,16 +159,6 @@
       initDashboard();
     }
 
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      wallet = input.value.trim();
-      if (!wallet) return;
-      setCookie(cookieName, wallet);
-      form.style.display = 'none';
-      initDashboard();
-    });
-
-    // animate number
     function animateNumber(el, target, decimals=2, duration=800) {
       const start = parseFloat(el.innerText.replace(/,/g, '')) || 0;
       const range = target - start;
@@ -194,11 +177,27 @@
       if (!wallet) return;
       try {
         const res = await fetch(`https://supportxmr.com/api/miner/${wallet}/stats`);
-        const { stats } = await res.json();
-        animateNumber(document.getElementById('pending'), stats.pending / 1e12, 2);
-        animateNumber(document.getElementById('workers'), stats.workers, 0);
-        animateNumber(document.getElementById('hashrate'), stats.hashrate / 1e6, 2);
-        animateNumber(document.getElementById('paid'), stats.paid / 1e12, 2);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        // Determine data source
+        const base = data.stats || data;
+        // Workers or Shares
+        const workersVal = (base.workers !== undefined) ? base.workers : base.validShares;
+        const workersLabel = (base.workers !== undefined) ? 'Active Workers' : 'Valid Shares';
+        document.getElementById('workersLabel').innerText = workersLabel;
+        animateNumber(document.getElementById('workers'), workersVal, 0);
+        // Hashrate with dynamic unit
+        const hrVal = (base.hashrate !== undefined) ? base.hashrate : base.hash;
+        let displayHR, unit;
+        if (hrVal < 1e6) { displayHR = hrVal; unit = 'H/s'; }
+        else { displayHR = hrVal / 1e6; unit = 'MH/s'; }
+        document.getElementById('hashUnit').innerText = unit;
+        animateNumber(document.getElementById('hashrate'), displayHR, unit === 'H/s' ? 0 : 2);
+        // Pending & Paid
+        const pending = ((base.amtDue !== undefined) ? base.amtDue : base.pending) / 1e12;
+        const paid    = ((base.amtPaid !== undefined) ? base.amtPaid : base.paid) / 1e12;
+        animateNumber(document.getElementById('pending'), pending, 6);
+        animateNumber(document.getElementById('paid'), paid, 6);
       } catch (err) {
         console.error('Fetch error:', err);
       }
