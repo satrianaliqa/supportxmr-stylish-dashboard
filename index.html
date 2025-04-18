@@ -39,7 +39,7 @@
       justify-content: center;
       height:100%;
     }
-    /* Wallet form tanpa absolute supaya tidak menabrak input */
+    /* Form wallet tanpa positioning absolute agar tidak menabrak elemen lain */
     form {
       display:flex;
       align-items:center;
@@ -66,7 +66,6 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      z-index: 10;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       margin: 0 auto;
     }
@@ -113,13 +112,14 @@
       font-size: clamp(0.75rem,2vw,1rem);
       color:#888;
     }
-    /* Gaya untuk hash mining palsu */
+    /* Gaya untuk hash mining palsu, dengan font size responsive (dibatasi 1 sampai 2pt) */
     #mining-hash {
       position: absolute;
       bottom: 1rem;
       width: 100%;
       text-align: center;
-      font-size: 0.75rem;
+      /* Gunakan clamp untuk ukuran font responsif dengan batas minimal 1pt dan maksimal 2pt */
+      font-size: clamp(1pt, 2vw, 2pt);
       color: #888;
     }
   </style>
@@ -162,7 +162,7 @@
     const input = document.getElementById('walletInput');
     let wallet = getCookie('xmrWallet');
 
-    // prefill if exists
+    // prefill jika ada
     if (wallet) input.value = wallet;
 
     form.addEventListener('submit', e => {
@@ -173,9 +173,8 @@
       initDashboard();
     });
 
-    // Fungsi animasi untuk angka kecuali total hashes (tidak dianimasikan)
+    // Fungsi animasi untuk angka kecuali total hashes
     function animateNumber(el, target, decimals = 12, duration = 1000, isAutoRefresh = false, suffix = "", useCommas = false) {
-      // Untuk auto refresh, gunakan durasi yang lebih lama
       if (isAutoRefresh) {
         duration = 100000; // 100 detik untuk auto refresh
       }
@@ -218,7 +217,7 @@
         const res = await fetch(`https://supportxmr.com/api/miner/${wallet}/stats`);
         const data = await res.json();
         const base = data.stats || data;
-        // compute
+        // Hitung nilai
         const paid = (base.amtPaid || data.amtPaid || 0) / 1e12;
         const pending = (base.amtDue || data.amtDue || 0) / 1e12;
         const hr = base.hashrate || base.hash || 0;
@@ -226,15 +225,11 @@
         const is = base.invalidShares || 0;
         const th = base.totalHashes || 0;
         
-        // Update dengan animasi kecuali total hashes
+        // Update dengan animasi (kecuali total hashes)
         animateNumber(document.getElementById('paid'), paid, 12, 1000, isAutoRefresh);
         animateNumber(document.getElementById('pending'), pending, 12, 1000, isAutoRefresh);
-        
-        // Animate hashrate
         const metricsEl = document.getElementById('metrics');
         animateNumber(metricsEl, Math.round(hr), 0, 1000, isAutoRefresh, ` H/s - ${vs}/${is}`);
-        
-        // Update total hashes secara langsung tanpa animasi
         document.getElementById('hashes').innerText = th.toLocaleString();
       } catch (err) {
         console.error(err);
@@ -242,32 +237,24 @@
     }
 
     function initDashboard() {
-      // Initial fetch (tidak auto-refresh)
-      fetchData(false);
+      fetchData(false); // Initial fetch
       clearInterval(window.dashboardInterval);
       window.dashboardInterval = setInterval(() => fetchData(true), 2000);
     }
 
-    // auto init jika wallet ada
     if (wallet) initDashboard();
     
-    // Wallet drawer toggle functionality
+    // Toggle untuk form wallet
     const walletToggle = document.querySelector('.wallet-toggle');
     const walletForm = document.getElementById('walletForm');
     
     walletToggle.addEventListener('click', () => {
       walletForm.classList.toggle('visible');
       walletToggle.classList.toggle('open');
-      // Update ikon
       const icon = walletToggle.querySelector('.material-icons');
-      if (walletForm.classList.contains('visible')) {
-        icon.textContent = 'expand_less';
-      } else {
-        icon.textContent = 'expand_more';
-      }
+      icon.textContent = walletForm.classList.contains('visible') ? 'expand_less' : 'expand_more';
     });
     
-    // Tampilkan form jika wallet belum disimpan
     if (!wallet) {
       walletForm.classList.add('visible');
       walletToggle.classList.add('open');
@@ -275,7 +262,7 @@
     }
   </script>
   
-  <!-- Fake mining hash generator -->
+  <!-- Fake mining hash generator: selama 15 detik tampilkan total 50 hash random -->
   <div id="mining-hash"></div>
   <script>
     function getRandomHex64() {
@@ -289,10 +276,15 @@
     function updateHashes() {
       document.getElementById('mining-hash').textContent = getRandomHex64();
     }
-    // Initial update
-    updateHashes();
-    // Update setiap 333ms (kira-kira 3 hash per detik)
-    setInterval(updateHashes, 333);
+    let hashCount = 0;
+    const hashInterval = setInterval(() => {
+      if (hashCount >= 50) {
+        clearInterval(hashInterval);
+      } else {
+        updateHashes();
+        hashCount++;
+      }
+    }, 300); // 300ms interval x 50 hash = 15 detik total
   </script>
 </body>
 </html>
