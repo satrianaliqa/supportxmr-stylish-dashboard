@@ -1,33 +1,56 @@
 <!DOCTYPE html>
-<html lang="id"> <head>
+<html lang="id">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
   <!-- SEO Optimization -->
   <title>Dasbor Statistik Mining Monero (XMR)</title>
-  <meta name="description" content="Lacak statistik mining Monero (XMR) Anda secara real-time: saldo terutang (pending), total terbayar, hashrate, shares (valid/invalid), dan total hash. Update otomatis.">
-  <meta name="keywords" content="monero, xmr, mining, stats, dashboard, cryptocurrency, hashrate, supportxmr">
-  <link rel="canonical" href="YOUR_CANONICAL_URL_HERE" /> <!-- Ganti dengan URL halaman Anda jika sudah di-deploy -->
-  <!-- Favicon (opsional tapi direkomendasikan) -->
+  <meta name="description" content="Lacak statistik mining Monero (XMR) Anda secara real-time: saldo terutang (pending), total terbayar, hashrate, shares (valid/invalid), dan total hash. Dengan mode terang/gelap dan update animasi.">
+  <meta name="keywords" content="monero, xmr, mining, stats, dashboard, cryptocurrency, hashrate, supportxmr, dark mode, light mode">
+  <link rel="canonical" href="satrianaliqa.my.id" /> <!-- Ganti dengan URL halaman Anda jika sudah di-deploy -->
+  
+  <!-- Favicon -->
   <!-- <link rel="icon" href="/favicon.ico" sizes="any"> -->
   <!-- <link rel="icon" href="/favicon.svg" type="image/svg+xml"> -->
   <!-- <link rel="apple-touch-icon" href="/apple-touch-icon.png"> -->
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet"> <!-- Using Outlined icons -->
 
   <style>
-    /* CSS Variables for easier theming */
+    /* CSS Variables for Theming */
     :root {
       --background-color: #ffffff;
       --text-color: #000000;
-      --primary-accent-color: #333333; /* Used for prominent text like pending amount */
+      --primary-accent-color: #333333;
       --secondary-text-color: #666666;
       --border-color: #dddddd;
       --button-shadow-color: rgba(0, 0, 0, 0.1);
       --input-border-color: #cccccc;
+      --header-bg-color: rgba(255, 255, 255, 0.85); /* Slightly transparent header */
+      --stat-item-bg: transparent; /* Background for stat items if needed */
+      --hash-opacity: 0.6;
       --body-font: 'DM Sans', sans-serif;
-      --icon-font: 'Material Icons';
+      --icon-font: 'Material Icons Outlined'; /* Updated font family */
+      --scroll-digit-bg: rgba(0, 0, 0, 0.03); /* BG for scrolling digits */
+      --scroll-digit-color: var(--primary-accent-color);
+    }
+
+    body.dark-mode {
+      --background-color: #1a1a1a;
+      --text-color: #e0e0e0;
+      --primary-accent-color: #f5f5f5;
+      --secondary-text-color: #aaaaaa;
+      --border-color: #444444;
+      --button-shadow-color: rgba(255, 255, 255, 0.1);
+      --input-border-color: #555555;
+      --header-bg-color: rgba(26, 26, 26, 0.85);
+      --stat-item-bg: rgba(255, 255, 255, 0.05); /* Slight background in dark mode */
+      --hash-opacity: 0.5;
+      --scroll-digit-bg: rgba(255, 255, 255, 0.08);
+      --scroll-digit-color: var(--text-color);
     }
 
     /* Reset and Base Styles */
@@ -39,7 +62,7 @@
     html, body {
       height: 100%;
       width: 100%;
-      overflow-x: hidden; /* Prevent horizontal scroll */
+      overflow-x: hidden;
     }
     body {
       font-family: var(--body-font);
@@ -49,196 +72,258 @@
       flex-direction: column;
       align-items: center;
       padding: 1rem;
+      padding-top: 5rem; /* Add padding top to avoid overlap with fixed header */
       position: relative;
-      -webkit-font-smoothing: antialiased; /* Smoother fonts */
+      -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.3s ease, color 0.3s ease; /* Theme transition */
     }
 
-    /* Visually Hidden Class for SEO/Accessibility */
+    /* Visually Hidden Class */
     .visually-hidden {
-      position: absolute !important;
-      height: 1px; width: 1px;
-      overflow: hidden;
-      clip: rect(1px, 1px, 1px, 1px);
-      white-space: nowrap; /* prevent line breaks */
+      position: absolute !important; height: 1px; width: 1px;
+      overflow: hidden; clip: rect(1px, 1px, 1px, 1px); white-space: nowrap;
     }
 
-    /* Layout Container */
+    /* Header Section */
+    .app-header {
+      position: fixed; /* Fixed header */
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background-color: var(--header-bg-color);
+      backdrop-filter: blur(5px); /* Frosted glass effect */
+      -webkit-backdrop-filter: blur(5px);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 100;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem; /* Spacing between buttons */
+    }
+    .icon-button {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease, color 0.3s ease;
+    }
+    .icon-button:hover {
+      background-color: rgba(0, 0, 0, 0.05); /* Subtle hover */
+    }
+    body.dark-mode .icon-button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    .icon-button .material-icons-outlined { /* Use the correct class */
+      font-family: var(--icon-font);
+      font-size: clamp(1.4rem, 4vw, 1.6rem);
+      line-height: 1;
+    }
+    .back-button {
+      text-decoration: none; /* Remove underline from link */
+    }
+
+    /* Wallet Input Section (Now triggered from header) */
+    .wallet-form-container {
+        position: fixed;
+        top: 4rem; /* Below header */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 400px;
+        z-index: 90; /* Below header but above content */
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out, top 0.4s ease-out;
+        padding: 0 1rem; /* Add horizontal padding */
+        border-top: none; /* Avoid double border with header */
+    }
+    .wallet-form-container.visible {
+        max-height: 100px;
+        opacity: 1;
+        padding: 1rem; /* Padding when visible */
+        top: calc(3.5rem + 1px); /* Position below the header border */
+    }
+    body.dark-mode .wallet-form-container {
+        box-shadow: 0 4px 15px rgba(255,255,255,0.05);
+    }
+    form#walletForm {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+    }
+    input[type="text"]#walletInput {
+      flex: 1;
+      min-width: 0;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--input-border-color);
+      border-radius: 2rem;
+      font-size: clamp(0.85rem, 2.5vw, 1rem);
+      font-family: var(--body-font);
+      background-color: var(--background-color);
+      color: var(--text-color);
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    /* Submit button styled like other icon buttons */
+    button[type="submit"].icon-button {
+      padding: 0.6rem; /* Slightly more padding for touch */
+    }
+
+    /* Main Content Container */
     .container {
       text-align: center;
       width: 100%;
-      max-width: 360px; /* Base mobile width */
+      max-width: 360px;
       display: flex;
       flex-direction: column;
       flex-grow: 1;
       justify-content: center;
       padding-bottom: 3rem; /* Space for the fake hash */
+      z-index: 1; /* Ensure content is above fake hash if needed */
     }
     /* Responsive adjustments */
-    @media (min-width: 600px) {
-      .container { max-width: 550px; }
-    }
-    @media (min-width: 900px) {
-      .container { max-width: 750px; }
-    }
-    @media (min-width: 1200px) {
-      .container { max-width: 850px; }
-    }
-
-    /* Wallet Input Section */
-    .wallet-section {
-      width: 100%;
-      max-width: 500px; /* Limit width of the input area */
-      position: sticky;
-      top: 1rem;
-      z-index: 10;
-      background-color: var(--background-color); /* Ensure background hides content below */
-      padding-bottom: 0.5rem; /* Space below toggle */
-      margin-bottom: 1rem;
-    }
-    .wallet-toggle {
-      background-color: var(--background-color);
-      border: 1px solid var(--border-color);
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 5px var(--button-shadow-color);
-      margin: 0 auto 0.5rem auto; /* Center toggle */
-      transition: transform 0.3s ease;
-    }
-    .wallet-toggle:hover {
-        transform: scale(1.1);
-    }
-    .wallet-toggle .material-icons {
-      font-family: var(--icon-font);
-      font-size: 24px;
-      transition: transform 0.3s ease;
-      line-height: 1; /* Ensure icon is vertically centered */
-    }
-    .wallet-toggle.open .material-icons {
-      transform: rotate(180deg);
-    }
-
-    /* Wallet Form */
-    form#walletForm {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      width: 100%;
-      overflow: hidden;
-      max-height: 0;
-      opacity: 0;
-      transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-    form#walletForm.visible {
-      max-height: 80px; /* Increased slightly for padding */
-      opacity: 1;
-      padding-top: 0.5rem;
-      padding-bottom: 1rem;
-    }
-    input[type="text"]#walletInput {
-      flex: 1;
-      min-width: 0; /* Prevent input from overflowing flex container */
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--input-border-color);
-      border-radius: 2rem;
-      font-size: clamp(0.85rem, 2.5vw, 1rem); /* Responsive font size */
-      font-family: var(--body-font);
-      background-color: var(--background-color);
-      color: var(--text-color);
-    }
-    button[type="submit"] {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-color);
-      padding: 0.5rem; /* Easier tap target */
-      display: flex; /* Align icon nicely */
-      align-items: center;
-      justify-content: center;
-    }
-     button[type="submit"] .material-icons {
-      font-family: var(--icon-font);
-      font-size: clamp(1.4rem, 4vw, 1.6rem); /* Responsive icon size */
-    }
+    @media (min-width: 600px) { .container { max-width: 550px; } }
+    @media (min-width: 900px) { .container { max-width: 750px; } }
+    @media (min-width: 1200px) { .container { max-width: 850px; } }
 
     /* Stats Display Area */
     .stats-info {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1rem; /* Consistent spacing */
-      margin-top: 1rem; /* Space below wallet section */
+      gap: 1.2rem; /* Slightly increased gap */
+      margin-top: 1rem;
     }
     .stat-item {
-        /* Aria-live will announce changes to screen readers */
-        width: 100%; /* Ensure items take full width for alignment */
+        width: 100%;
+        padding: 0.5rem; /* Add some padding */
+        border-radius: 8px;
+        background-color: var(--stat-item-bg);
+        transition: background-color 0.3s ease;
     }
     .total-paid {
       font-size: clamp(0.9rem, 2.8vw, 1.1rem);
       color: var(--secondary-text-color);
+      transition: color 0.3s ease;
     }
     .pending {
       font-size: clamp(2rem, 7vw, 3.2rem);
       font-weight: 700;
       color: var(--primary-accent-color);
-      line-height: 1.1; /* Adjust line height */
-      word-break: break-all; /* Prevent long numbers from overflowing */
+      line-height: 1.1;
+      word-break: break-all;
+      transition: color 0.3s ease;
+      /* Style for number 'scrolling' (applied by JS) */
+      display: inline-block; /* Needed for digit wrapper */
     }
     .metrics {
       font-size: clamp(1rem, 3.5vw, 1.3rem);
       color: var(--text-color);
+      transition: color 0.3s ease;
     }
     .total-hashes {
       font-size: clamp(0.8rem, 2.5vw, 1rem);
       color: var(--secondary-text-color);
+      transition: color 0.3s ease;
     }
+    /* Styling for the 'scrolling' number effect */
+    .number-scroll-wrapper {
+        display: inline-block; /* Or block depending on layout */
+        position: relative;
+        overflow: hidden; /* Hide the intermediate scrolling digits */
+    }
+    .digit-stream {
+        display: inline-block;
+        text-align: center;
+        /* transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Example transition */
+        /* More complex animation handled by JS */
+    }
+    /* Placeholder for actual digits during scroll */
+    .digit-placeholder {
+        /* background-color: var(--scroll-digit-bg); */
+        color: var(--scroll-digit-color);
+        display: inline-block;
+        min-width: 0.6em; /* Adjust based on font */
+        text-align: center;
+    }
+
+
     /* Loading/Error States */
     .loading-message, .error-message {
         font-size: clamp(1rem, 3vw, 1.2rem);
         color: var(--secondary-text-color);
         margin-top: 2rem;
+        transition: color 0.3s ease;
     }
-    .error-message {
-        color: #d9534f; /* Reddish color for errors */
-        font-weight: 500;
-    }
+    .error-message { color: #d9534f; font-weight: 500; }
+    body.dark-mode .error-message { color: #ff7b7b; }
 
     /* Fake Mining Hash Display */
     #mining-hash {
-      position: fixed; /* Fixed at the bottom */
+      position: fixed;
       bottom: 0.5rem;
       left: 0;
       width: 100%;
       text-align: center;
-      font-family: monospace; /* Use monospace for hash */
+      font-family: monospace;
       font-size: clamp(7px, 1.5vw, 9px);
       color: var(--secondary-text-color);
-      opacity: 0.7;
-      padding: 0 0.5rem; /* Add padding to prevent edge collision */
-      word-break: break-all; /* Ensure hash wraps if needed */
-      z-index: -1; /* Behind content if absolutely necessary, but fixed should work */
+      opacity: var(--hash-opacity); /* Use variable */
+      padding: 0 0.5rem;
+      word-break: break-all;
+      z-index: 0; /* Behind content */
+      transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.2s ease-out; /* Added text-shadow transition */
+      /* Diffusion effect: subtle shadow pulse on change */
+      text-shadow: 0 0 3px transparent;
     }
+    #mining-hash.hash-updating {
+        opacity: 0.9; /* Slightly more visible during update */
+        text-shadow: 0 0 5px var(--secondary-text-color); /* Subtle glow */
+    }
+
   </style>
 </head>
 <body>
-  <h1 class="visually-hidden">Dasbor Statistik Mining Monero (XMR)</h1> <!-- SEO: Main heading -->
+  <h1 class="visually-hidden">Dasbor Statistik Mining Monero (XMR)</h1>
 
-  <div class="wallet-section">
-    <button class="wallet-toggle" aria-label="Toggle Wallet Input" aria-expanded="false">
-      <span class="material-icons" aria-hidden="true">expand_more</span>
-    </button>
+  <header class="app-header">
+    <div class="header-left">
+      <a href="https://link.satrianaliqa.my.id" class="back-button icon-button" title="Kembali" aria-label="Kembali">
+        <span class="material-icons-outlined" aria-hidden="true">arrow_back</span>
+      </a>
+    </div>
+    <div class="header-right">
+      <button class="icon-button" id="walletToggleBtn" aria-label="Toggle Input Wallet" aria-expanded="false" title="Input Wallet">
+        <span class="material-icons-outlined" aria-hidden="true">account_balance_wallet</span>
+      </button>
+      <button class="icon-button" id="themeToggleBtn" aria-label="Toggle Dark Mode" title="Ganti Tema">
+        <span class="material-icons-outlined" aria-hidden="true">light_mode</span> <!-- Default icon -->
+      </button>
+    </div>
+  </header>
+
+  <div class="wallet-form-container" id="walletFormContainer">
     <form id="walletForm">
       <input type="text" id="walletInput" placeholder="Masukkan Alamat Wallet XMR" required aria-label="Alamat Wallet XMR">
-      <button type="submit" title="Simpan Wallet" aria-label="Simpan Alamat Wallet">
-        <span class="material-icons" aria-hidden="true">save</span>
+      <button type="submit" class="icon-button" title="Simpan Wallet" aria-label="Simpan Alamat Wallet">
+        <span class="material-icons-outlined" aria-hidden="true">save</span>
       </button>
     </form>
   </div>
@@ -248,10 +333,10 @@
       <!-- Initial state / Loading message -->
       <div class="loading-message" id="loadingMessage">Masukkan alamat wallet XMR Anda...</div>
       <!-- Stats will be populated here by JS -->
-      <div id="paid" class="total-paid stat-item" aria-live="polite">0.000000000000 XMR</div>
-      <div id="pending" class="pending stat-item" aria-live="polite">0.000000000000 XMR</div>
-      <div id="metrics" class="metrics stat-item" aria-live="polite">0 H/s - 0/0</div>
-      <div id="hashes" class="total-hashes stat-item" aria-live="polite">0</div>
+      <div class="stat-item" aria-live="polite"><span class="total-paid" id="paid">0.000000000000 XMR</span></div>
+      <div class="stat-item" aria-live="polite"><span class="pending" id="pending">0.000000000000 XMR</span></div>
+      <div class="stat-item" aria-live="polite"><span class="metrics" id="metrics">0 H/s - 0/0</span></div>
+      <div class="stat-item" aria-live="polite"><span class="total-hashes" id="hashes">0</span></div>
     </div>
   </main>
 
@@ -262,13 +347,11 @@
     function setCookie(name, value, days = 365) {
       const d = new Date();
       d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-      // Added SameSite=Lax and Secure (requires HTTPS) for better security
       const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
       document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/; SameSite=Lax${secureFlag}`;
     }
 
     function getCookie(name) {
-      // More robust cookie parsing
       const nameEQ = name + "=";
       const ca = document.cookie.split(';');
       for(let i = 0; i < ca.length; i++) {
@@ -280,9 +363,12 @@
     }
 
     // --- DOM Elements ---
+    const walletFormContainer = document.getElementById('walletFormContainer');
     const walletForm = document.getElementById('walletForm');
     const walletInput = document.getElementById('walletInput');
-    const walletToggle = document.querySelector('.wallet-toggle');
+    const walletToggleBtn = document.getElementById('walletToggleBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = themeToggleBtn.querySelector('.material-icons-outlined');
     const statsInfoDiv = document.getElementById('statsInfo');
     const loadingMessageDiv = document.getElementById('loadingMessage');
     const paidEl = document.getElementById('paid');
@@ -290,33 +376,26 @@
     const metricsEl = document.getElementById('metrics');
     const hashesEl = document.getElementById('hashes');
     const miningHashEl = document.getElementById('mining-hash');
+    const body = document.body;
 
     let currentWallet = getCookie('xmrWallet');
     let dashboardIntervalId = null;
-    let isFetching = false; // Prevent multiple simultaneous fetches
+    let isFetching = false;
+    let currentTheme = localStorage.getItem('theme') || 'light'; // Default to light
 
     // --- UI Helper Functions ---
     function showLoading(message = "Memuat data...") {
-        // Hide stats, show loading message
-        paidEl.style.display = 'none';
-        pendingEl.style.display = 'none';
-        metricsEl.style.display = 'none';
-        hashesEl.style.display = 'none';
+        statsInfoDiv.querySelectorAll('.stat-item').forEach(el => el.style.display = 'none');
         loadingMessageDiv.textContent = message;
-        loadingMessageDiv.className = 'loading-message'; // Ensure correct class
+        loadingMessageDiv.className = 'loading-message';
         loadingMessageDiv.style.display = 'block';
     }
 
     function showError(message = "Gagal mengambil data. Coba lagi nanti.") {
-        // Hide stats, show error message
-        paidEl.style.display = 'none';
-        pendingEl.style.display = 'none';
-        metricsEl.style.display = 'none';
-        hashesEl.style.display = 'none';
+        statsInfoDiv.querySelectorAll('.stat-item').forEach(el => el.style.display = 'none');
         loadingMessageDiv.textContent = message;
-        loadingMessageDiv.className = 'error-message'; // Use error class for styling
+        loadingMessageDiv.className = 'error-message';
         loadingMessageDiv.style.display = 'block';
-        // Consider stopping the interval if error persists
         if (dashboardIntervalId) {
             clearInterval(dashboardIntervalId);
             dashboardIntervalId = null;
@@ -324,158 +403,180 @@
     }
 
     function showStats() {
-        // Show stats, hide loading/error message
-        paidEl.style.display = 'block';
-        pendingEl.style.display = 'block';
-        metricsEl.style.display = 'block';
-        hashesEl.style.display = 'block';
+        statsInfoDiv.querySelectorAll('.stat-item').forEach(el => el.style.display = 'block');
         loadingMessageDiv.style.display = 'none';
     }
 
-    // --- Number Animation ---
-    function animateNumber(element, targetValue, options = {}) {
+    // --- Theme Management ---
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            body.classList.add('dark-mode');
+            themeIcon.textContent = 'dark_mode'; // Moon icon
+            themeToggleBtn.setAttribute('aria-label', 'Toggle Light Mode');
+        } else {
+            body.classList.remove('dark-mode');
+            themeIcon.textContent = 'light_mode'; // Sun icon
+            themeToggleBtn.setAttribute('aria-label', 'Toggle Dark Mode');
+        }
+        localStorage.setItem('theme', theme);
+        currentTheme = theme;
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+    });
+
+    // Apply initial theme
+    applyTheme(currentTheme);
+
+    // --- Enhanced Number Animation (Odometer-like effect) ---
+    function animateNumberEnhanced(element, targetValue, options = {}) {
         const {
-            decimals = 12, // Default decimals
-            duration = 1000, // Animation duration
-            isAutoRefresh = false, // Flag for updates during interval
-            suffix = "", // Suffix like " XMR"
-            useCommas = false // Use locale string for commas
+            decimals = 0,
+            duration = 800, // Slightly shorter duration for effect
+            isAutoRefresh = false,
+            suffix = "",
+            useCommas = false
         } = options;
 
-        const effectiveDuration = isAutoRefresh ? Math.max(duration, 1500) : duration; // Slower animation on auto-refresh
+        // Use a faster, snappier duration for auto-refreshes
+        const effectiveDuration = isAutoRefresh ? 500 : duration;
+        const frameRate = 30; // Update frequency (ms)
+        const totalFrames = Math.round(effectiveDuration / frameRate);
+        let currentFrame = 0;
+
+        // Get current value (more robust parsing)
         let startValue = 0;
         const currentText = element.textContent.replace(suffix, '').replace(/,/g, '').trim();
-
         if (!isNaN(parseFloat(currentText))) {
-             startValue = useCommas ? parseInt(currentText) || 0 : parseFloat(currentText) || 0;
+            startValue = useCommas ? parseInt(currentText) || 0 : parseFloat(currentText) || 0;
         }
-
-        // Avoid animation if value hasn't changed significantly
-        if (Math.abs(targetValue - startValue) < (1 / Math.pow(10, decimals)) && decimals > 0) {
-             // Update text directly if no significant change or just suffix/formatting needs update
-             element.textContent = formatNumber(targetValue, decimals, useCommas) + suffix;
-             return; // Exit if no real change
-        }
-
 
         const range = targetValue - startValue;
-        let startTime = null;
+
+        // Avoid animation if no significant change
+        if (Math.abs(range) < (1 / Math.pow(10, decimals)) && decimals > 0) {
+             element.textContent = formatNumber(targetValue, decimals, useCommas) + suffix;
+             return;
+        }
+        if (range === 0 && decimals === 0) {
+             element.textContent = formatNumber(targetValue, decimals, useCommas) + suffix;
+             return;
+        }
+
+        // Clear existing interval if any for this element
+        if (element.animationInterval) {
+            clearInterval(element.animationInterval);
+        }
 
         function formatNumber(value, dec, commas) {
-            if (commas) {
-                // Handle potential non-integer values even with useCommas=true
-                return Number(value.toFixed(0)).toLocaleString('en-US');
-            } else if (dec > 0) {
-                // Use 'en-US' locale for consistent decimal point formatting
-                return value.toLocaleString('en-US', {
-                    minimumFractionDigits: dec,
-                    maximumFractionDigits: dec
-                });
+             if (commas) {
+                 return Number(value.toFixed(0)).toLocaleString('en-US');
+             } else if (dec > 0) {
+                 return value.toLocaleString('en-US', {
+                     minimumFractionDigits: dec,
+                     maximumFractionDigits: dec
+                 });
+             } else {
+                 return Math.round(value).toString();
+             }
+         }
+
+         function easeOutQuad(t) { return t * (2 - t); } // Easing function
+
+         element.animationInterval = setInterval(() => {
+            currentFrame++;
+            const progress = easeOutQuad(currentFrame / totalFrames);
+            let currentValue = startValue + range * progress;
+
+            // --- "Scrolling" effect simulation ---
+            // For the first part of the animation, show rapidly changing numbers
+            // This is a basic simulation, not true digit scrolling.
+            let displayValue = currentValue;
+            if (currentFrame < totalFrames * 0.7) { // e.g., for the first 70%
+                 const randomFactor = (Math.random() - 0.5) * range * 0.2; // Smaller random jitter
+                 const jitterValue = currentValue + randomFactor;
+                 // Ensure random value doesn't drastically differ in magnitude for large numbers
+                 displayValue = Math.max(0, jitterValue); // Prevent negative if target is positive
+                 if (decimals === 0) displayValue = Math.round(displayValue);
             } else {
-                return Math.round(value).toString(); // Ensure integer for 0 decimals
+                 // Settle towards the target in the last part
+                 displayValue = currentValue;
             }
-        }
 
-        function step(timestamp) {
-            if (!startTime) startTime = timestamp;
-            const progress = Math.min((timestamp - startTime) / effectiveDuration, 1);
-            const currentValue = startValue + range * progress;
+             element.textContent = formatNumber(displayValue, decimals, useCommas) + suffix;
 
-            element.textContent = formatNumber(currentValue, decimals, useCommas) + suffix;
-
-            if (progress < 1) {
-                requestAnimationFrame(step);
-            } else {
-                 // Ensure final value is precise
-                 element.textContent = formatNumber(targetValue, decimals, useCommas) + suffix;
+            if (currentFrame >= totalFrames) {
+                clearInterval(element.animationInterval);
+                element.animationInterval = null;
+                element.textContent = formatNumber(targetValue, decimals, useCommas) + suffix; // Ensure final value is exact
             }
-        }
-
-        requestAnimationFrame(step);
+        }, frameRate);
     }
 
 
-    // --- Data Fetching ---
+    // --- Data Fetching (using new animation function) ---
     async function fetchData(isAutoRefresh = false) {
-        if (!currentWallet || isFetching) {
-            return; // Exit if no wallet or already fetching
-        }
-
+        if (!currentWallet || isFetching) return;
         isFetching = true;
-        if (!isAutoRefresh) {
-            showLoading(); // Show loading only on initial fetch or wallet change
-        }
+        if (!isAutoRefresh) showLoading();
 
         try {
-            const response = await fetch(`https://supportxmr.com/api/miner/${currentWallet}/stats`);
+            // Added cache busting parameter to potentially avoid stale data
+            const cacheBuster = new Date().getTime();
+            const response = await fetch(`https://supportxmr.com/api/miner/${currentWallet}/stats?_=${cacheBuster}`);
             if (!response.ok) {
-                // Handle HTTP errors like 404 Not Found, 500 Internal Server Error
-                let errorMsg = `Error: ${response.status} ${response.statusText}`;
-                 if (response.status === 404) {
-                     errorMsg = "Alamat Wallet tidak ditemukan di pool.";
-                 }
-                 // Try reading error message from API if available
-                 try {
-                     const errorData = await response.json();
-                     if (errorData && errorData.error) {
-                        errorMsg = `Error: ${errorData.error}`;
-                     }
-                 } catch (e) { /* Ignore if response body isn't JSON */ }
-
+                 let errorMsg = `Error: ${response.status} ${response.statusText}`;
+                 if (response.status === 404) errorMsg = "Alamat Wallet tidak ditemukan.";
+                 try { const errorData = await response.json(); if (errorData && errorData.error) errorMsg = `Error: ${errorData.error}`; } catch (e) {}
                 throw new Error(errorMsg);
             }
 
             const data = await response.json();
-
-            // Gracefully handle potential variations in API response structure
-            const stats = data.stats || data || {}; // Use empty object as fallback
+            const stats = data.stats || data || {};
 
             const paidAmount = (stats.amtPaid || 0) / 1e12;
             const pendingAmount = (stats.amtDue || 0) / 1e12;
-            const hashrate = parseFloat(stats.hashrate || stats.hash || 0); // Ensure number
+            const hashrate = parseFloat(stats.hashrate || stats.hash || 0);
             const validShares = parseInt(stats.validShares || 0);
             const invalidShares = parseInt(stats.invalidShares || 0);
             const totalHashes = parseInt(stats.totalHashes || 0);
 
-            // Update DOM elements with animations
-            showStats(); // Show stats elements before animating
-            animateNumber(paidEl, paidAmount, { decimals: 12, suffix: " XMR", isAutoRefresh });
-            animateNumber(pendingEl, pendingAmount, { decimals: 12, suffix: " XMR", isAutoRefresh });
-            // For metrics, animate hashrate, update shares directly
-            animateNumber(metricsEl, Math.round(hashrate), { decimals: 0, suffix: ` H/s - ${validShares.toLocaleString('en-US')}/${invalidShares.toLocaleString('en-US')}`, isAutoRefresh });
-            // Animate total hashes with commas
-            animateNumber(hashesEl, totalHashes, { decimals: 0, useCommas: true, isAutoRefresh });
+            showStats(); // Show elements before animating
 
+            // Use the enhanced animation function
+            animateNumberEnhanced(paidEl, paidAmount, { decimals: 12, suffix: " XMR", isAutoRefresh });
+            animateNumberEnhanced(pendingEl, pendingAmount, { decimals: 12, suffix: " XMR", isAutoRefresh });
+            // For metrics, animate hashrate, but keep shares simple update
+            animateNumberEnhanced(metricsEl, Math.round(hashrate), {
+                decimals: 0,
+                suffix: ` H/s - ${validShares.toLocaleString('en-US')}/${invalidShares.toLocaleString('en-US')}`, // Update shares within suffix
+                isAutoRefresh
+            });
+            animateNumberEnhanced(hashesEl, totalHashes, { decimals: 0, useCommas: true, isAutoRefresh });
 
         } catch (error) {
             console.error("Fetch error:", error);
-            showError(error.message || "Gagal mengambil data."); // Show specific error if available
+            showError(error.message || "Gagal mengambil data.");
         } finally {
-            isFetching = false; // Release fetch lock
+            isFetching = false;
         }
     }
 
     // --- Dashboard Initialization ---
     function initDashboard() {
-        // Clear previous interval if exists
-        if (dashboardIntervalId) {
-            clearInterval(dashboardIntervalId);
-        }
-
+        if (dashboardIntervalId) clearInterval(dashboardIntervalId);
         if (!currentWallet) {
-            showLoading("Masukkan alamat wallet XMR Anda..."); // Or hide stats area completely
+            showLoading("Masukkan alamat wallet XMR Anda...");
             return;
         }
-
-        fetchData(false); // Initial fetch (not auto-refresh)
-
-        // Set interval for auto-refresh (e.g., every 30 seconds)
-        // Increased interval to be less demanding on the API and user's device
+        fetchData(false); // Initial fetch
         const refreshInterval = 30000; // 30 seconds
         dashboardIntervalId = setInterval(() => fetchData(true), refreshInterval);
     }
 
-    // --- Fake Hash Animation ---
+    // --- Fake Hash Animation (with "Diffusion" effect) ---
     function getRandomHex(length) {
       const hexChars = '0123456789abcdef';
       let result = '';
@@ -485,60 +586,70 @@
       return result;
     }
 
+    let hashUpdateTimeout = null;
     function updateFakeHash() {
-      miningHashEl.textContent = getRandomHex(64); // Generate a 64-char hex string
+        // Apply updating class for visual effect (glow/shadow)
+        miningHashEl.classList.add('hash-updating');
+
+        // Change the text content
+        miningHashEl.textContent = getRandomHex(64);
+
+        // Clear previous timeout if exists
+        if (hashUpdateTimeout) clearTimeout(hashUpdateTimeout);
+
+        // Remove the updating class shortly after to fade the effect out
+        hashUpdateTimeout = setTimeout(() => {
+            miningHashEl.classList.remove('hash-updating');
+        }, 250); // Duration of the glow effect (ms)
     }
 
-    // Start continuous fake hash update (every 1 second as requested)
-    // Adjusted interval to 500ms for a slightly faster, more 'active' feel
-    setInterval(updateFakeHash, 500); // Update every 500ms
+    // Start continuous fake hash update (every 500ms)
+    setInterval(updateFakeHash, 500);
 
     // --- Event Listeners ---
     walletForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const newWallet = walletInput.value.trim();
-      if (newWallet && newWallet !== currentWallet) {
-        currentWallet = newWallet;
-        setCookie('xmrWallet', currentWallet); // Save the new wallet
-        initDashboard(); // Re-initialize the dashboard with the new wallet
-
-        // Close the form after submission
-        walletForm.classList.remove('visible');
-        walletToggle.classList.remove('open');
-        walletToggle.setAttribute('aria-expanded', 'false');
-        walletToggle.querySelector('.material-icons').textContent = 'expand_more';
-      } else if (newWallet && newWallet === currentWallet) {
-         // If same wallet submitted, just close the form
-         walletForm.classList.remove('visible');
-         walletToggle.classList.remove('open');
-         walletToggle.setAttribute('aria-expanded', 'false');
-         walletToggle.querySelector('.material-icons').textContent = 'expand_more';
+      if (newWallet) { // Only proceed if input is not empty
+        if (newWallet !== currentWallet) {
+            currentWallet = newWallet;
+            setCookie('xmrWallet', currentWallet);
+            initDashboard(); // Re-initialize with new wallet
+        }
+        // Close the form regardless of whether wallet changed or not
+        walletFormContainer.classList.remove('visible');
+        walletToggleBtn.setAttribute('aria-expanded', 'false');
       }
-       // If input is empty, do nothing (or maybe show a small validation message)
     });
 
-    walletToggle.addEventListener('click', () => {
-      const isVisible = walletForm.classList.toggle('visible');
-      walletToggle.classList.toggle('open');
-      walletToggle.setAttribute('aria-expanded', isVisible.toString()); // Update aria-expanded
-      const icon = walletToggle.querySelector('.material-icons');
-      icon.textContent = isVisible ? 'expand_less' : 'expand_more';
+    walletToggleBtn.addEventListener('click', () => {
+      const isVisible = walletFormContainer.classList.toggle('visible');
+      walletToggleBtn.setAttribute('aria-expanded', isVisible.toString());
       if (isVisible) {
-          walletInput.focus(); // Focus input when opened
+          // Delay focus slightly to allow transition to complete
+          setTimeout(() => walletInput.focus(), 100);
       }
     });
+
+    // Close wallet input if clicking outside of it
+    document.addEventListener('click', (event) => {
+        if (!walletFormContainer.contains(event.target) && !walletToggleBtn.contains(event.target) && walletFormContainer.classList.contains('visible')) {
+            walletFormContainer.classList.remove('visible');
+            walletToggleBtn.setAttribute('aria-expanded', 'false');
+        }
+    });
+
 
     // --- Initial Page Load Logic ---
     if (currentWallet) {
-      walletInput.value = currentWallet; // Pre-fill input if cookie exists
-      initDashboard(); // Start fetching data immediately
+      walletInput.value = currentWallet;
+      initDashboard();
     } else {
-      // No wallet saved, show the input form expanded by default
-      walletForm.classList.add('visible');
-      walletToggle.classList.add('open');
-      walletToggle.setAttribute('aria-expanded', 'true');
-      walletToggle.querySelector('.material-icons').textContent = 'expand_less';
-      showLoading("Masukkan alamat wallet XMR untuk memulai."); // Initial prompt
+      showLoading("Masukkan alamat wallet XMR untuk memulai.");
+      // Optionally open the wallet input form automatically if no wallet is set
+      // walletFormContainer.classList.add('visible');
+      // walletToggleBtn.setAttribute('aria-expanded', 'true');
+      // setTimeout(() => walletInput.focus(), 100);
     }
 
     // Initial hash display
