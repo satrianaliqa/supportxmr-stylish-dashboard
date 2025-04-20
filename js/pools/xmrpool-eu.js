@@ -2,22 +2,40 @@ import { BasePool } from './base-pool.js';
 
 class XMRPoolEU extends BasePool {
     constructor() {
-        super('https://web.xmrpool.eu:8119');
+        // Updated API endpoint without port 8119
+        super('https://api.xmrpool.eu/pool');
     }
 
     async getStats(wallet) {
         try {
             const response = await fetch(`${this.apiEndpoint}/miner/${wallet}/stats`);
             if (!response.ok) {
+                if (response.status === 404) {
+                    // Return empty stats for new/unknown wallets
+                    return {
+                        amtPaid: 0,
+                        amtDue: 0,
+                        hashrate: 0,
+                        validShares: 0,
+                        invalidShares: 0,
+                        totalHashes: 0
+                    };
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const stats = await response.json();
             if (!stats || typeof stats !== 'object') {
-                throw new Error('Invalid response from XMRPool.eu');
+                return {
+                    amtPaid: 0,
+                    amtDue: 0,
+                    hashrate: 0,
+                    validShares: 0,
+                    invalidShares: 0,
+                    totalHashes: 0
+                };
             }
 
-            // XMRPool.eu uses node-cryptonote-pool format
             return {
                 amtPaid: parseInt(stats.paid || 0),
                 amtDue: parseInt(stats.balance || 0),
@@ -28,7 +46,7 @@ class XMRPoolEU extends BasePool {
             };
         } catch (error) {
             console.error('XMRPool.eu API Error:', error);
-            throw new Error('Failed to fetch data from XMRPool.eu');
+            throw new Error('Wallet belum ada di XMRPool.eu atau sedang offline');
         }
     }
 

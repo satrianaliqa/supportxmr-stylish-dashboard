@@ -9,15 +9,37 @@ class NanoPool extends BasePool {
         try {
             const response = await fetch(`${this.apiEndpoint}/user/${wallet}`);
             if (!response.ok) {
+                if (response.status === 404) {
+                    // Return empty stats for new/unknown wallets
+                    return {
+                        amtPaid: 0,
+                        amtDue: 0,
+                        hashrate: 0,
+                        validShares: 0,
+                        invalidShares: 0,
+                        totalHashes: 0
+                    };
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
             if (!data.status) {
+                // Return empty stats if account not found
+                if (data.error && data.error.toLowerCase().includes('account not found')) {
+                    return {
+                        amtPaid: 0,
+                        amtDue: 0,
+                        hashrate: 0,
+                        validShares: 0,
+                        invalidShares: 0,
+                        totalHashes: 0
+                    };
+                }
                 throw new Error(data.error || 'Failed to fetch data from Nanopool');
             }
 
-            const poolData = data.data;
+            const poolData = data.data || {};
             let totalValidShares = 0;
             let totalInvalidShares = 0;
 
@@ -28,9 +50,8 @@ class NanoPool extends BasePool {
                 });
             }
 
-            // Convert to standard format
             return {
-                amtPaid: Math.floor(parseFloat(poolData.paid || 0) * 1e12), // Convert to atomic units
+                amtPaid: Math.floor(parseFloat(poolData.paid || 0) * 1e12),
                 amtDue: Math.floor(parseFloat(poolData.balance || 0) * 1e12),
                 hashrate: parseFloat(poolData.hashrate || 0),
                 validShares: totalValidShares,
@@ -39,7 +60,7 @@ class NanoPool extends BasePool {
             };
         } catch (error) {
             console.error('Nanopool API Error:', error);
-            throw new Error('Failed to fetch data from Nanopool');
+            throw new Error('Wallet belum ada di Nanopool atau sedang offline');
         }
     }
 

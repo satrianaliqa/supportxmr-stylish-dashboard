@@ -39,14 +39,14 @@
   <div class="wallet-form-container" id="walletFormContainer">
     <form id="walletForm">
       <div class="pool-selector">
-        <select id="poolSelect" class="pool-select" aria-label="Pilih Pool Mining">
-          <!-- Options will be populated by JavaScript -->
-        </select>
+        <select id="poolSelect" class="pool-select" aria-label="Pilih Pool Mining"></select>
       </div>
-      <input type="text" id="walletInput" placeholder="Masukkan Alamat Wallet XMR" required aria-label="Alamat Wallet XMR">
-      <button type="submit" class="icon-button" title="Simpan Wallet" aria-label="Simpan Alamat Wallet">
-        <span class="material-icons-outlined" aria-hidden="true">save</span>
-      </button>
+      <div class="wallet-input-row">
+        <input type="text" id="walletInput" placeholder="Masukkan Alamat Wallet XMR" required aria-label="Alamat Wallet XMR">
+        <button type="submit" class="icon-button" title="Simpan Wallet" aria-label="Simpan Alamat Wallet">
+          <span class="material-icons-outlined" aria-hidden="true">save</span>
+        </button>
+      </div>
     </form>
   </div>
 

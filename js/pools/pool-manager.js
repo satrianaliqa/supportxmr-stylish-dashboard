@@ -1,3 +1,5 @@
+import { BasePool } from './base-pool.js';
+
 class PoolManager {
     constructor() {
         this.pools = new Map();

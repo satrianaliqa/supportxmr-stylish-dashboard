@@ -163,6 +163,13 @@ class DashboardApp {
         try {
             const stats = await this.poolManager.getStats(this.currentWallet);
 
+            // If all values are 0, wallet might be new or inactive
+            const isEmptyStats = Object.values(stats).every(val => val === 0);
+            if (isEmptyStats) {
+                this.showMessage("Wallet belum aktif di pool ini atau belum ada data mining.", "info-message");
+                return;
+            }
+
             const paidAmount = (stats.amtPaid || 0) / 1e12;
             const pendingAmount = (stats.amtDue || 0) / 1e12;
             const hashrate = parseFloat(stats.hashrate || 0);
@@ -183,10 +190,18 @@ class DashboardApp {
 
         } catch (error) {
             console.error("Fetch error:", error);
-            this.showError(error.message || "Gagal mengambil data.");
+            const errorMessage = error.message || "Gagal mengambil data.";
+            this.showMessage(errorMessage, "error-message");
         } finally {
             this.isFetching = false;
         }
+    }
+
+    showMessage(message, className = "loading-message") {
+        this.statsInfoDiv.querySelectorAll('.stat-item').forEach(el => el.style.display = 'none');
+        this.loadingMessageDiv.textContent = message;
+        this.loadingMessageDiv.className = className;
+        this.loadingMessageDiv.style.display = 'block';
     }
 
     initDashboard() {

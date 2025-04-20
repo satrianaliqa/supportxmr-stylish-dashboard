@@ -7,29 +7,44 @@ class MoneroOceanPool extends BasePool {
 
     async getStats(wallet) {
         try {
-            const response = await fetch(`${this.apiEndpoint}/miner/${wallet}/stats`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            // MoneroOcean requires different endpoints for different stats
+            const [statsResponse, paymentsResponse] = await Promise.all([
+                fetch(`${this.apiEndpoint}/miner/${wallet}/stats/allWorkers`),
+                fetch(`${this.apiEndpoint}/miner/${wallet}/payments`)
+            ]);
+
+            if (!statsResponse.ok || !paymentsResponse.ok) {
+                // For new/unknown wallets, return empty stats
+                if (statsResponse.status === 404 || paymentsResponse.status === 404) {
+                    return {
+                        amtPaid: 0,
+                        amtDue: 0,
+                        hashrate: 0,
+                        validShares: 0,
+                        invalidShares: 0,
+                        totalHashes: 0
+                    };
+                }
+                throw new Error(`HTTP error! status: ${statsResponse.status}`);
             }
             
-            const data = await response.json();
-            if (!data.status) {
-                throw new Error(data.error || 'Failed to fetch data from MoneroOcean');
-            }
+            const stats = await statsResponse.json();
+            const payments = await paymentsResponse.json();
 
-            // MoneroOcean uses similar format to SupportXMR
-            const stats = data.data || {};
+            // Calculate total paid from payments history
+            const totalPaid = payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
+
             return {
-                amtPaid: parseInt(stats.amtPaid || 0),
-                amtDue: parseInt(stats.amtDue || 0),
+                amtPaid: parseInt(totalPaid),
+                amtDue: parseInt(stats.due || 0),
                 hashrate: parseFloat(stats.hash || 0),
                 validShares: parseInt(stats.validShares || 0),
                 invalidShares: parseInt(stats.invalidShares || 0),
-                totalHashes: parseInt(stats.totalHashes || 0)
+                totalHashes: parseInt(stats.hashes || 0)
             };
         } catch (error) {
             console.error('MoneroOcean API Error:', error);
-            throw new Error('Failed to fetch data from MoneroOcean');
+            throw new Error('Wallet belum ada di MoneroOcean atau sedang offline');
         }
     }
 
