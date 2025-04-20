@@ -7,10 +7,14 @@ import { XMRPoolEU } from './pools/xmrpool-eu.js';
 
 class DashboardApp {
     constructor() {
-        this.initializeElements();
-        this.initializeServices();
-        this.setupEventListeners();
-        this.start();
+        try {
+            this.initializeElements();
+            this.initializeServices();
+            this.setupEventListeners();
+            this.start();
+        } catch (err) {
+            this.showFatalError(err);
+        }
     }
 
     initializeElements() {
@@ -20,7 +24,7 @@ class DashboardApp {
         this.walletInput = document.getElementById('walletInput');
         this.walletToggleBtn = document.getElementById('walletToggleBtn');
         this.themeToggleBtn = document.getElementById('themeToggleBtn');
-        this.themeIcon = this.themeToggleBtn.querySelector('.material-icons-outlined');
+        this.themeIcon = this.themeToggleBtn?.querySelector('.material-icons-outlined');
         this.poolSelect = document.getElementById('poolSelect');
 
         // Stats elements
@@ -31,6 +35,11 @@ class DashboardApp {
         this.metricsEl = document.getElementById('metrics');
         this.hashesEl = document.getElementById('hashes');
         this.miningHashEl = document.getElementById('mining-hash');
+
+        // Tambahan pengecekan elemen
+        if (!this.walletFormContainer || !this.walletForm || !this.walletInput || !this.walletToggleBtn || !this.themeToggleBtn || !this.themeIcon || !this.poolSelect || !this.statsInfoDiv || !this.loadingMessageDiv || !this.paidEl || !this.pendingEl || !this.metricsEl || !this.hashesEl || !this.miningHashEl) {
+            throw new Error('Beberapa elemen DOM tidak ditemukan. Pastikan semua id pada HTML sesuai dengan yang di JavaScript.');
+        }
     }
 
     initializeServices() {
@@ -81,11 +90,12 @@ class DashboardApp {
 
     updatePoolSelector() {
         if (!this.poolSelect) return;
-        
         const pools = this.poolManager.getAvailablePools();
         this.poolSelect.innerHTML = pools.map(pool => 
-            `<option value="${pool.id}">${pool.name}</option>`
+            `<option value="${pool.id}" ${this.poolManager.activePool === pool.id ? 'selected' : ''}>${pool.name}</option>`
         ).join('');
+        // Pastikan poolSelect visible
+        this.poolSelect.style.display = pools.length > 0 ? 'block' : 'none';
     }
 
     handleWalletSubmit(e) {
@@ -106,7 +116,9 @@ class DashboardApp {
 
     handleThemeToggle() {
         const newTheme = this.themeManager.toggleTheme();
-        this.themeIcon.textContent = newTheme === 'dark' ? 'dark_mode' : 'light_mode';
+        if (this.themeIcon) {
+            this.themeIcon.textContent = newTheme === 'dark' ? 'dark_mode' : 'light_mode';
+        }
         this.themeToggleBtn.setAttribute('aria-label', `Toggle ${newTheme === 'dark' ? 'Light' : 'Dark'} Mode`);
     }
 
@@ -198,6 +210,12 @@ class DashboardApp {
         } else {
             this.showLoading("Masukkan alamat wallet XMR untuk memulai.");
         }
+    }
+
+    showFatalError(message) {
+        if (typeof message === 'object' && message.message) message = message.message;
+        document.body.innerHTML = `<div style="color:red;padding:2rem;text-align:center;font-size:1.2rem;">Terjadi error fatal: ${message}<br>Silakan cek console browser (F12) untuk detail error.</div>`;
+        console.error('Fatal error:', message);
     }
 }
 
