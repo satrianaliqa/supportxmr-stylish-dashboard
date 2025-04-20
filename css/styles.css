@@ -1,0 +1,336 @@
+/* CSS Variables for Theming */
+:root {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --primary-accent-color: #333333;
+  --secondary-text-color: #666666;
+  --border-color: #dddddd;
+  --button-shadow-color: rgba(0, 0, 0, 0.1);
+  --input-border-color: #cccccc;
+  --header-bg-color: rgba(255, 255, 255, 0.85);
+  --hash-opacity: 0.6;
+  --body-font: 'DM Sans', sans-serif;
+  --icon-font: 'Material Icons Outlined';
+  --scroll-digit-bg: rgba(0, 0, 0, 0.03);
+  --scroll-digit-color: var(--primary-accent-color);
+}
+
+body.dark-mode {
+  --background-color: #1a1a1a;
+  --text-color: #e0e0e0;
+  --primary-accent-color: #f5f5f5;
+  --secondary-text-color: #aaaaaa;
+  --border-color: #444444;
+  --button-shadow-color: rgba(255, 255, 255, 0.1);
+  --input-border-color: #555555;
+  --header-bg-color: rgba(26, 26, 26, 0.85);
+  --hash-opacity: 0.5;
+  --scroll-digit-bg: rgba(255, 255, 255, 0.08);
+  --scroll-digit-color: var(--text-color);
+}
+
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--body-font);
+  background-color: var(--background-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  padding-top: 5rem;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Visually Hidden Class */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
+
+/* Header Section */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--header-bg-color);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 100;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.3s ease;
+}
+
+.icon-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.icon-button .material-icons-outlined {
+  font-family: var(--icon-font);
+  font-size: clamp(1.4rem, 4vw, 1.6rem);
+  line-height: 1;
+}
+
+.back-button {
+  text-decoration: none;
+}
+
+/* Wallet Input Section */
+.wallet-form-container {
+  position: fixed;
+  top: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 400px;
+  z-index: 90;
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.4s ease-out, top 0.4s ease-out;
+  padding: 0 1rem;
+  border-top: none;
+}
+
+.wallet-form-container.visible {
+  max-height: 100px;
+  opacity: 1;
+  padding: 1rem;
+  top: calc(3.5rem + 1px);
+}
+
+body.dark-mode .wallet-form-container {
+  box-shadow: 0 4px 15px rgba(255,255,255,0.05);
+}
+
+form#walletForm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+input[type="text"]#walletInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--input-border-color);
+  border-radius: 2rem;
+  font-size: clamp(0.85rem, 2.5vw, 1rem);
+  font-family: var(--body-font);
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Submit button styled like other icon buttons */
+button[type="submit"].icon-button {
+  padding: 0.6rem;
+}
+
+/* Main Content Container */
+.container {
+  text-align: center;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+  padding-bottom: 3rem;
+  z-index: 1;
+}
+
+/* Stats Display Area */
+.stats-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  margin-top: 1rem;
+}
+
+.stat-item {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background-color: var(--stat-item-bg);
+  transition: background-color 0.3s ease;
+}
+
+.total-paid {
+  font-size: clamp(0.9rem, 2.8vw, 1.1rem);
+  color: var(--secondary-text-color);
+  transition: color 0.3s ease;
+}
+
+.pending {
+  font-size: clamp(2rem, 7vw, 3.2rem);
+  font-weight: 700;
+  color: var(--primary-accent-color);
+  line-height: 1.1;
+  word-break: break-all;
+  transition: color 0.3s ease;
+  display: inline-block;
+}
+
+.metrics {
+  font-size: clamp(1rem, 3.5vw, 1.3rem);
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+.total-hashes {
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
+  color: var(--secondary-text-color);
+  transition: color 0.3s ease;
+}
+
+/* Loading/Error States */
+.loading-message, .error-message {
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  color: var(--secondary-text-color);
+  margin-top: 2rem;
+  transition: color 0.3s ease;
+}
+
+.error-message {
+  color: #d9534f;
+  font-weight: 500;
+}
+
+body.dark-mode .error-message {
+  color: #ff7b7b;
+}
+
+/* Fake Mining Hash Display */
+#mining-hash {
+  position: fixed;
+  bottom: 0.5rem;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-family: monospace;
+  font-size: clamp(7px, 1.5vw, 9px);
+  color: var(--secondary-text-color);
+  opacity: var(--hash-opacity);
+  padding: 0 0.5rem;
+  word-break: break-all;
+  z-index: 0;
+  transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.2s ease-out;
+  text-shadow: 0 0 3px transparent;
+}
+
+#mining-hash.hash-updating {
+  opacity: 0.9;
+  text-shadow: 0 0 5px var(--secondary-text-color);
+}
+
+/* Responsive adjustments */
+@media (min-width: 600px) {
+  .container {
+    max-width: 550px;
+  }
+}
+
+@media (min-width: 900px) {
+  .container {
+    max-width: 750px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 850px;
+  }
+}
+
+/* Pool Selection Styles */
+.pool-selector {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.pool-select {
+  appearance: none;
+  background: var(--background-color);
+  color: var(--text-color);
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border: 1px solid var(--input-border-color);
+  border-radius: 2rem;
+  font-family: var(--body-font);
+  font-size: clamp(0.85rem, 2.5vw, 1rem);
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.pool-select:focus {
+  outline: none;
+  border-color: var(--primary-accent-color);
+}
+
+.pool-selector::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--text-color);
+  pointer-events: none;
+}
