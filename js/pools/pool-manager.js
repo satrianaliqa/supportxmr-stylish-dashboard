@@ -80,3 +80,6 @@ class PoolManager {
         localStorage.setItem('selectedPool', this.activePool);
     }
 }
+
+// Export PoolManager so it can be imported in app.js
+export { PoolManager };
