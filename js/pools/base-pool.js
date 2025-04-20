@@ -50,3 +50,5 @@ class BasePool {
         throw new Error("Method 'getPoolWebsite()' must be implemented.");
     }
 }
+
+export { BasePool };

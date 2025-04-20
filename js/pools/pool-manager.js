@@ -1,7 +1,7 @@
 class PoolManager {
     constructor() {
         this.pools = new Map();
-        this.currentPool = null;
+        this.activePool = null;
     }
 
     /**
@@ -11,9 +11,13 @@ class PoolManager {
      */
     registerPool(id, poolInstance) {
         if (!(poolInstance instanceof BasePool)) {
-            throw new Error('Pool implementation must extend BasePool');
+            throw new Error('Pool instance must extend BasePool');
         }
         this.pools.set(id, poolInstance);
+        // Set first registered pool as default if none active
+        if (!this.activePool) {
+            this.activePool = id;
+        }
     }
 
     /**
@@ -24,8 +28,16 @@ class PoolManager {
         if (!this.pools.has(poolId)) {
             throw new Error(`Pool '${poolId}' not found`);
         }
-        this.currentPool = this.pools.get(poolId);
+        this.activePool = poolId;
         localStorage.setItem('selectedPool', poolId);
+    }
+
+    /**
+     * Get the active pool
+     * @returns {BasePool} - The active pool instance
+     */
+    getActivePool() {
+        return this.pools.get(this.activePool);
     }
 
     /**
@@ -33,10 +45,14 @@ class PoolManager {
      * @param {string} wallet - Wallet address to get stats for
      */
     async getStats(wallet) {
-        if (!this.currentPool) {
-            throw new Error('No pool selected');
+        const pool = this.getActivePool();
+        if (!pool) {
+            throw new Error('No active pool selected');
         }
-        return await this.currentPool.getStats(wallet);
+        if (!pool.validateWalletAddress(wallet)) {
+            throw new Error('Invalid wallet address format');
+        }
+        return pool.getStats(wallet);
     }
 
     /**
@@ -44,15 +60,10 @@ class PoolManager {
      * @returns {Array<{id: string, name: string, website: string}>}
      */
     getAvailablePools() {
-        const pools = [];
-        for (const [id, pool] of this.pools) {
-            pools.push({
-                id,
-                name: pool.getPoolName(),
-                website: pool.getPoolWebsite()
-            });
-        }
-        return pools;
+        return Array.from(this.pools.entries()).map(([id, pool]) => ({
+            id,
+            name: pool.getPoolName()
+        }));
     }
 
     /**
@@ -60,11 +71,12 @@ class PoolManager {
      * @param {string} defaultPoolId - Default pool ID to use if none was previously selected
      */
     initialize(defaultPoolId) {
-        const savedPool = localStorage.getItem('selectedPool') || defaultPoolId;
-        if (this.pools.has(savedPool)) {
-            this.setActivePool(savedPool);
-        } else if (this.pools.size > 0) {
-            this.setActivePool([...this.pools.keys()][0]);
+        // Try to load last used pool from localStorage
+        const savedPool = localStorage.getItem('selectedPool');
+        this.activePool = (savedPool && this.pools.has(savedPool)) ? savedPool : defaultPoolId;
+        if (!this.pools.has(this.activePool)) {
+            throw new Error(`Pool ${this.activePool} not found`);
         }
+        localStorage.setItem('selectedPool', this.activePool);
     }
 }

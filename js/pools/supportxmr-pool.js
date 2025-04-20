@@ -1,3 +1,5 @@
+import { BasePool } from './base-pool.js';
+
 class SupportXMRPool extends BasePool {
     constructor() {
         super('https://supportxmr.com/api');
@@ -38,3 +40,5 @@ class SupportXMRPool extends BasePool {
         return "https://supportxmr.com";
     }
 }
+
+export { SupportXMRPool };

@@ -1,6 +1,9 @@
 import { CookieUtil, NumberAnimator, HashAnimator, ThemeManager } from './utils.js';
 import { PoolManager } from './pools/pool-manager.js';
 import { SupportXMRPool } from './pools/supportxmr-pool.js';
+import { NanoPool } from './pools/nanopool.js';
+import { MoneroOceanPool } from './pools/moneroocean.js';
+import { XMRPoolEU } from './pools/xmrpool-eu.js';
 
 class DashboardApp {
     constructor() {
@@ -36,8 +39,11 @@ class DashboardApp {
         this.themeManager = new ThemeManager();
         this.hashAnimator = new HashAnimator(this.miningHashEl);
 
-        // Register available pools
+        // Register all available pools
         this.poolManager.registerPool('supportxmr', new SupportXMRPool());
+        this.poolManager.registerPool('nanopool', new NanoPool());
+        this.poolManager.registerPool('moneroocean', new MoneroOceanPool());
+        this.poolManager.registerPool('xmrpool-eu', new XMRPoolEU());
         
         // Initialize with default pool
         this.poolManager.initialize('supportxmr');
